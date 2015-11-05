@@ -4,8 +4,8 @@ import java.io.{FileWriter, File, PrintWriter}
 import scala.tools.nsc.io._
 import scala.reflect.SourceContext
 import scala.collection.mutable.ArrayBuffer
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.{GenericFatCodegen, ScalaCompile, GenericCodegen, ScalaCodegen}
+import scala.lms.common._
+import scala.lms.internal.{GenericFatCodegen, ScalaCompile, GenericCodegen, ScalaCodegen}
 
 import Config._
 import codegen.cpp.TargetCpp

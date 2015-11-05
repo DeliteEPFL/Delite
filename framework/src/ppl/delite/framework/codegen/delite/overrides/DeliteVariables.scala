@@ -3,8 +3,8 @@ package ppl.delite.framework.codegen.delite.overrides
 import java.io.PrintWriter
 import ppl.delite.framework.ops.{DeliteOpsExp, BaseGenDeliteOps}
 import ppl.delite.framework.datastructures.CLikeGenDeliteStruct
-import scala.virtualization.lms.internal.{CLikeCodegen, GenerationFailedException}
-import scala.virtualization.lms.common._
+import scala.lms.internal.{CLikeCodegen, GenerationFailedException}
+import scala.lms.common._
 import scala.collection.mutable.HashSet
 
 trait DeliteScalaGenVariables extends BaseGenDeliteOps with ScalaGenEffect {

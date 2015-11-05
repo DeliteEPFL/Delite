@@ -1,8 +1,8 @@
 package ppl.delite.framework
 
 import java.util.IdentityHashMap
-import scala.virtualization.lms.internal.{Expressions,FatExpressions}
-import scala.virtualization.lms.internal.FatScheduling
+import scala.lms.internal.{Expressions,FatExpressions}
+import scala.lms.internal.FatScheduling
 
 /**
  * Optimizes dependency calculations in LMS by caching framework results.

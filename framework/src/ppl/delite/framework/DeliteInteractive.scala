@@ -3,8 +3,8 @@ package ppl.delite.framework
 import java.io.{FileWriter, File, PrintWriter}
 import scala.tools.nsc.io._
 import scala.collection.mutable.ArrayBuffer
-import scala.virtualization.lms.common.{BaseExp, Base, SynchronizedArrayBufferOps}
-import scala.virtualization.lms.internal.{GenericFatCodegen, ScalaCompile, GenericCodegen, ScalaCodegen}
+import scala.lms.common.{BaseExp, Base, SynchronizedArrayBufferOps}
+import scala.lms.internal.{GenericFatCodegen, ScalaCompile, GenericCodegen, ScalaCodegen}
 
 import codegen.cpp.TargetCpp
 import codegen.cuda.TargetCuda
@@ -47,7 +47,7 @@ import ppl.delite.framework._
 import ppl.dsl.optiml._
 import ppl.dsl.optiml.datastruct.scala._
 
-import scala.virtualization.lms.common.SynchronizedArrayBufferOps
+import scala.lms.common.SynchronizedArrayBufferOps
 
 import scala.collection.mutable.ArrayBuffer
 

@@ -1,7 +1,7 @@
 package ppl.delite.framework.ops
 
-import scala.virtualization.lms.internal.GenerationFailedException
-import scala.virtualization.lms.common._
+import scala.lms.internal.GenerationFailedException
+import scala.lms.common._
 import scala.reflect.{SourceContext, RefinedManifest}
 import ppl.delite.framework.datastructures._
 import ppl.delite.framework.Config

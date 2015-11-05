@@ -1,6 +1,6 @@
 package ppl.delite.framework.ops
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 
 trait CGenDeliteOps extends CGenLoopsFat with GenericGenDeliteOps with CGenDeliteInternalOps {

@@ -3,7 +3,7 @@ package ppl.delite.framework.codegen.delite.overrides
 import ppl.delite.framework.ops.DeliteOpsExp
 import ppl.delite.framework.datastructures.ScalaGenDeliteStruct
 import ppl.delite.framework.Config
-import scala.virtualization.lms.internal.CLikeCodegen
+import scala.lms.internal.CLikeCodegen
 
 trait DeliteAllOverridesExp extends DeliteIfThenElseExp /*with DeliteOpMap*/ with DeliteWhileExp {
   this: DeliteOpsExp =>
@@ -38,8 +38,8 @@ trait CLikeTypeOverrides extends CLikeCodegen {
 trait DeliteCudaGenAllOverrides extends DeliteCudaGenVariables with DeliteCudaGenIfThenElse /*with DeliteCudaGenRange*/ with DeliteCudaGenWhile {
   val IR: DeliteAllOverridesExp
 
-  override def initializeGenerator(buildDir:String): Unit = {
-    super.initializeGenerator(buildDir)
+  override def initializeGenerator(buildDir:String, args: Array[String]): Unit = {
+    super.initializeGenerator(buildDir, args)
     headerStream.println("#include \"DeliteCuda.h\"")
   }
 }
@@ -47,8 +47,8 @@ trait DeliteCudaGenAllOverrides extends DeliteCudaGenVariables with DeliteCudaGe
 trait DeliteOpenCLGenAllOverrides extends DeliteOpenCLGenVariables with DeliteOpenCLGenIfThenElse /*with DeliteCudaGenRange*/ with DeliteOpenCLGenWhile {
   val IR: DeliteAllOverridesExp
 
-  override def initializeGenerator(buildDir:String): Unit = {
-    super.initializeGenerator(buildDir)
+  override def initializeGenerator(buildDir:String, args: Array[String]): Unit = {
+    super.initializeGenerator(buildDir, args)
     headerStream.println("#include \"DeliteOpenCL.h\"")
   }
 }
@@ -56,8 +56,8 @@ trait DeliteOpenCLGenAllOverrides extends DeliteOpenCLGenVariables with DeliteOp
 trait DeliteCGenAllOverrides extends DeliteCGenVariables with DeliteCGenIfThenElse /*with DeliteCGenRange*/ with DeliteCGenWhile  {
   val IR: DeliteAllOverridesExp
 
-  override def initializeGenerator(buildDir:String): Unit = {
-    super.initializeGenerator(buildDir)
+  override def initializeGenerator(buildDir:String, args: Array[String]): Unit = {
+    super.initializeGenerator(buildDir, args)
     headerStream.println("#include \"DeliteCpp.h\"")
   }
 }

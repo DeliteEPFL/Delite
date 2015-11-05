@@ -1,7 +1,7 @@
 package ppl.tests.scalatest.firstdsl
 
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal._
+import scala.lms.common._
+import scala.lms.internal._
 import ppl.delite.framework._
 import ppl.delite.framework.codegen._
 import ppl.delite.framework.ops._

@@ -3,8 +3,8 @@ package ppl.delite.framework.ops
 import ppl.delite.framework.codegen.delite.DeliteKernelCodegen
 import ppl.delite.framework.Config
 import scala.collection.mutable.HashMap
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.CCodegen
+import scala.lms.common._
+import scala.lms.internal.CCodegen
 import scala.reflect.SourceContext
 import java.io.{StringWriter, PrintWriter}
 

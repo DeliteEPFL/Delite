@@ -2,8 +2,8 @@ package ppl.delite.framework.codegen.restage
 
 import java.io.{StringWriter,PrintWriter}
 import reflect.{SourceContext, RefinedManifest}
-import scala.virtualization.lms.internal._
-import scala.virtualization.lms.common._
+import scala.lms.internal._
+import scala.lms.common._
 
 import ppl.delite.framework.codegen.Target
 import ppl.delite.framework.codegen.delite.overrides._
@@ -38,8 +38,8 @@ trait RestageCodegen extends ScalaCodegen with Config {
       out.println("import ppl.delite.framework.{DeliteILApplication,DeliteILApplicationRunner}")
       out.println("import ppl.delite.framework.datastructures.{DeliteArray,DeliteArrayBuffer}")
       out.println("import ppl.delite.framework.ops.DeliteCollection")
-      out.println("import scala.virtualization.lms.util.OverloadHack")
-      out.println("import scala.virtualization.lms.common.Record")
+      out.println("import scala.lms.util.OverloadHack")
+      out.println("import scala.lms.common.Record")
       out.println("import reflect.{RefinedManifest,SourceContext}")
       out.println()
       out.println("object RestageApplicationRunner extends DeliteILApplicationRunner with RestageApplication")

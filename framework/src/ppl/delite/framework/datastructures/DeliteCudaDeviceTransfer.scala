@@ -1,8 +1,8 @@
 package ppl.delite.framework.datastructures
 
-import scala.virtualization.lms.internal.{GenerationFailedException, Expressions, CudaDeviceTransfer, CudaCodegen}
-import scala.virtualization.lms.common.BaseGenStruct
-import scala.virtualization.lms.internal.Targets._
+import scala.lms.internal.{GenerationFailedException, Expressions, CudaDeviceTransfer, CudaCodegen}
+import scala.lms.common.BaseGenStruct
+import scala.lms.internal.Targets._
 
 trait DeliteCudaDeviceTransfer extends CudaDeviceTransfer {
   this: CudaCodegen with CLikeGenDeliteStruct =>

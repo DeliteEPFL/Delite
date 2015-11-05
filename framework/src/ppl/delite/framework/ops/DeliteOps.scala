@@ -3,8 +3,8 @@ package ppl.delite.framework.ops
 import java.io.{FileWriter, File, PrintWriter, StringWriter}
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.{GenericCodegen, GenericFatCodegen, GenerationFailedException, CCodegen}
+import scala.lms.common._
+import scala.lms.internal.{GenericCodegen, GenericFatCodegen, GenerationFailedException, CCodegen}
 import ppl.delite.framework.{Config, Util, DeliteApplication}
 import ppl.delite.framework.datastructures._
 import ppl.delite.framework.extern.lib._

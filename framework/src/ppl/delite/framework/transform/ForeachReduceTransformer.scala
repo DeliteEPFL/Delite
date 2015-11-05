@@ -2,8 +2,8 @@ package ppl.delite.framework.transform
 
 import java.io._
 import reflect.{Manifest, SourceContext}
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.{AbstractSubstTransformer,Transforming}
+import scala.lms.common._
+import scala.lms.internal.{AbstractSubstTransformer,Transforming}
 import ppl.delite.framework.DeliteApplication
 import ppl.delite.framework.ops.{DeliteOpsExp, BaseDeliteOpsTraversalFat}
 import ppl.delite.framework.ops.DeliteCollection

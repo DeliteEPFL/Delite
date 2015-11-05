@@ -5,7 +5,7 @@ import ppl.delite.framework.Config
 import ppl.delite.framework.datastructures._
 import scala.collection.mutable.HashMap
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 
 // This file contains the low-level Delite constructs, for the user-facing

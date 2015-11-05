@@ -1,8 +1,8 @@
 package ppl.delite.framework
 
-import scala.virtualization.lms.common.{Base, BaseExp}
-import scala.virtualization.lms.internal.{Blocks, Effects, AbstractTransformer, Transforming}
-import scala.virtualization.lms.util.OverloadHack
+import scala.lms.common.{Base, BaseExp}
+import scala.lms.internal.{Blocks, Effects, AbstractTransformer, Transforming}
+import scala.lms.util.OverloadHack
 
 trait Interfaces extends Base {
   

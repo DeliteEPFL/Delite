@@ -1,7 +1,7 @@
 package ppl.delite.framework.ops
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 trait DeliteReductionOpsExp extends BaseFatExp {  
 

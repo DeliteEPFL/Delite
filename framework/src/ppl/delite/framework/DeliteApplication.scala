@@ -3,8 +3,8 @@ package ppl.delite.framework
 import java.io.{FileWriter, File, PrintWriter}
 import scala.collection.mutable.{Map => MMap}
 import scala.tools.nsc.io._
-import scala.virtualization.lms.common.{BaseExp, Base}
-import scala.virtualization.lms.internal.{GenericFatCodegen, ScalaCompile, GenericCodegen, ScalaCodegen, Transforming, GenerationFailedException, CCodegen, CudaCodegen}
+import scala.lms.common.{BaseExp, Base}
+import scala.lms.internal.{GenericFatCodegen, ScalaCompile, GenericCodegen, ScalaCodegen, Transforming, GenerationFailedException, CCodegen, CudaCodegen}
 
 import codegen.cpp.TargetCpp
 import codegen.cuda.TargetCuda
@@ -99,7 +99,7 @@ trait DeliteApplication extends DeliteOpsExp with ScalaCompile with DeliteTransf
       //TODO: Remove c generator specialization
       val baseDir = Config.buildDir + File.separator + g.toString + File.separator
       writeModules(baseDir)
-      g.initializeGenerator(baseDir + "kernels" + File.separator)
+      g.initializeGenerator(baseDir + "kernels" + File.separator, Array[String]())
     }
 
     // Generate a single source output for each generator when in debug mode
@@ -108,7 +108,7 @@ trait DeliteApplication extends DeliteOpsExp with ScalaCompile with DeliteTransf
         for (g <- generators) {
           val streamDebug = new PrintWriter(new FileWriter(Config.degFilename.replace(".deg","." + g.toString)))
           val baseDir = Config.buildDir + File.separator + g.toString + File.separator
-          g.initializeGenerator(baseDir + "kernels" + File.separator)
+          g.initializeGenerator(baseDir + "kernels" + File.separator, Array[String]())
           g match {
             case gen: CCodegen => streamDebug.println("#include \"DeliteStandaloneMain.h\"\n")
             case _ => //
@@ -119,7 +119,7 @@ trait DeliteApplication extends DeliteOpsExp with ScalaCompile with DeliteTransf
         }
       }
     }
-    deliteGenerator.initializeGenerator(Config.buildDir)
+    deliteGenerator.initializeGenerator(Config.buildDir, Array[String]())
     val sd = emitRegisteredSource(deliteGenerator, stream)
     deliteGenerator.finalizeGenerator()
 

@@ -2,7 +2,7 @@ package ppl.tests.scalatest.delite
 
 import ppl.tests.scalatest._
 import ppl.delite.framework.datastructures._
-import scala.virtualization.lms.common.Record
+import scala.lms.common.Record
 
 /*
  * Tests Delite correctness in the presence of mutable writes, including nested writes that require IR rewrites.

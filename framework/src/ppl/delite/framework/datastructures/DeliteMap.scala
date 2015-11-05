@@ -1,6 +1,6 @@
 package ppl.delite.framework.datastructures
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 import ppl.delite.framework.ops.{DeliteCollection, DeliteOpsExp}
 import reflect.{SourceContext, RefinedManifest}
 

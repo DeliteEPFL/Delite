@@ -2,8 +2,8 @@ package ppl.delite.framework.ops
 
 import java.io.PrintWriter
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.{GenerationFailedException, GenericFatCodegen}
+import scala.lms.common._
+import scala.lms.internal.{GenerationFailedException, GenericFatCodegen}
 import ppl.delite.framework.datastructures.DeliteArray
 import ppl.delite.framework.Interfaces
 

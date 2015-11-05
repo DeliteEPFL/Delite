@@ -1,6 +1,6 @@
 package ppl.delite.framework.codegen.delite.generators
 
-import scala.virtualization.lms.common.{ VariablesExp, ScalaGenEffect, CGenEffect }
+import scala.lms.common.{ VariablesExp, ScalaGenEffect, CGenEffect }
 import java.io.PrintWriter
 
 trait DeliteGenScalaVariables extends ScalaGenEffect {

@@ -1,6 +1,6 @@
 package ppl.delite.framework.transform
 
-import scala.virtualization.lms.internal.FatBlockTraversal
+import scala.lms.internal.FatBlockTraversal
 import ppl.delite.framework.ops.{DeliteOpsExp, DeliteFileReaderOpsExp, DeliteCollection, DeliteFileInputStream}
 import ppl.delite.framework.datastructures.{DeliteArrayOpsExp, DeliteStructsExp, DeliteArray}
 

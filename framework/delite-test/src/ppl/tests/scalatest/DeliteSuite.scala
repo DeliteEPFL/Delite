@@ -2,7 +2,7 @@ package ppl.tests.scalatest
 
 import org.scalatest._
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 import ppl.delite.framework.Config
 import ppl.delite.framework.codegen.Target
@@ -39,7 +39,7 @@ trait DeliteTestConfig {
 
   var cppWhiteList = Seq("StaticData", "DeliteTestMkString", "DeliteTestAppend", "DeliteTestStrConcat", "DeliteTestFwNew", //test operations are Scala-only by design
                          "DeliteTestBwNew", "DeliteTestBwWrite", "DeliteTestBwClose", "DeliteTestPrintLn", "scala.collection.mutable.ArrayBuffer",
-                         "DeliteArraySeq[scala.virtualization.lms.common.Record{", "Array[scala.virtualization.lms.common.Record{") //C++ doesn't currently support non-Soa'd Array[Record]
+                         "DeliteArraySeq[scala.lms.common.Record{", "Array[scala.lms.common.Record{") //C++ doesn't currently support non-Soa'd Array[Record]
 
 }
 

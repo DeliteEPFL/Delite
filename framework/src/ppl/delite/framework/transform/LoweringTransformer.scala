@@ -2,7 +2,7 @@ package ppl.delite.framework.transform
 
 import ppl.delite.framework.ops.{BaseDeliteOpsTraversalFat, DeliteOpsExp}
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 /*
  * This transformer is intended to be used to lower IR nodes from an abstract representation 

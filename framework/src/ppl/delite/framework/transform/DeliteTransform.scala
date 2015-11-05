@@ -1,7 +1,7 @@
 package ppl.delite.framework.transform
 
 import reflect.{SourceContext}
-import scala.virtualization.lms.common.{ObjectOpsExp,WorklistTransformer}
+import scala.lms.common.{ObjectOpsExp,WorklistTransformer}
 import ppl.delite.framework.DeliteApplication
 
 trait DeliteTransform extends LoweringTransform {

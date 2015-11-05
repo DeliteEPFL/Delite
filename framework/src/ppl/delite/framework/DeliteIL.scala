@@ -2,8 +2,8 @@ package ppl.delite.framework
 
 import java.io._
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.{GenericFatCodegen, GenericCodegen}
+import scala.lms.common._
+import scala.lms.internal.{GenericFatCodegen, GenericCodegen}
 import ppl.delite.framework.datastructures._
 import ppl.delite.framework.codegen.Target
 import ppl.delite.framework.codegen.scala.TargetScala

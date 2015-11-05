@@ -2,9 +2,9 @@ package ppl.delite.framework.codegen.delite.generators
 
 import collection.mutable.{ArrayBuffer, ListBuffer, HashMap}
 import java.io.{StringWriter, FileWriter, File, PrintWriter}
-import scala.virtualization.lms.common.LoopFusionOpt
-import scala.virtualization.lms.internal.{GenericCodegen, CLikeCodegen, GPUCodegen, ScalaCodegen, GenerationFailedException}
-import scala.virtualization.lms.internal.Targets._
+import scala.lms.common.LoopFusionOpt
+import scala.lms.internal.{GenericCodegen, CLikeCodegen, GPUCodegen, ScalaCodegen, GenerationFailedException}
+import scala.lms.internal.Targets._
 import ppl.delite.framework.ops.DeliteCollection
 import scala.reflect.SourceContext
 

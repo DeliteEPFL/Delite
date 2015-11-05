@@ -1,9 +1,9 @@
 package ppl.delite.framework.codegen.delite.overrides
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 import ppl.delite.framework.ops.DeliteOpsExp
 import java.io.PrintWriter
-import scala.virtualization.lms.internal.{GenericNestedCodegen,GenerationFailedException}
+import scala.lms.internal.{GenericNestedCodegen,GenerationFailedException}
 import scala.reflect.SourceContext
 
 trait DeliteIfThenElseExp extends IfThenElseFatExp with DeliteOpsExp {

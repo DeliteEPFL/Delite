@@ -1,6 +1,6 @@
 package ppl.delite.framework.ops
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 import ppl.delite.framework.Config
 
 trait ScalaGenStaticDataDelite extends ScalaGenStaticData {

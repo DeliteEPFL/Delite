@@ -1,9 +1,9 @@
 package ppl.delite.framework.analysis
 
 import java.io.{PrintWriter, ByteArrayOutputStream}
-import scala.virtualization.lms.internal._
+import scala.lms.internal._
 import ppl.delite.framework.DeliteApplication
-import scala.virtualization.lms.util.OverloadHack
+import scala.lms.util.OverloadHack
 
 class MockStream extends ByteArrayOutputStream { 
    override def flush() {}

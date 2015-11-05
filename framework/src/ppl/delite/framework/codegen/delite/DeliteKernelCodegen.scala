@@ -1,7 +1,7 @@
 package ppl.delite.framework.codegen.delite
 
 import java.io.{File, StringWriter, PrintWriter}
-import scala.virtualization.lms.internal.{GenericFatCodegen, GenerationFailedException}
+import scala.lms.internal.{GenericFatCodegen, GenerationFailedException}
 import ppl.delite.framework.ops._
 import ppl.delite.framework.Config
 
