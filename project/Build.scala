@@ -4,7 +4,7 @@ import Keys._
 object DeliteBuild extends Build {
   val virtualization_lms_core = "EPFL" % "lms_2.11" % "0.3-SNAPSHOT"
 
-  System.setProperty("showSuppressedErrors", "false")
+  System.setProperty("showSuppressedErrors", "true")
 
   val scalaOrg = "org.scala-lang.virtualized"
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.11.2")
@@ -25,9 +25,12 @@ object DeliteBuild extends Build {
     libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "2.5.1",
     libraryDependencies += "org.apache.hadoop" % "hadoop-hdfs" % "2.5.1",
 
-    retrieveManaged := true,
+//    retrieveManaged := true,
     scalacOptions += "-Yno-generic-signatures",
-    scalacOptions += "-Yvirtualize"
+    scalacOptions += "-Yvirtualize",
+
+    logLevel := Level.Error,
+    scalacOptions ++= Seq("-unchecked", "-deprecation")
   )
 
   val virtBuildSettings = virtBuildSettingsBase ++ Seq(

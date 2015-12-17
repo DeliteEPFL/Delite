@@ -16,9 +16,12 @@ trait ProfileOps extends Base {
 }
 
 trait ProfileOpsExp extends ProfileOps with EffectExp {
+  implicit def profileArrayTyp: Typ[ProfileArray] = manifestTyp
+
   case class Profile(n: Exp[Int], body: Block[Any]) extends Def[ProfileArray]
 
   def profile_body(n: Exp[Int], func: => Exp[Any]) = {
+    implicit def anyTyp: Typ[Any] = manifestTyp // reifyEffects needs this because of func: Exp[Any]
     reflectEffect(Profile(n, reifyEffects(func)))  // create an IR node
   }
 

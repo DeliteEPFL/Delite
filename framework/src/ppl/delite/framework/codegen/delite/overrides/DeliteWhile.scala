@@ -51,7 +51,7 @@ trait DeliteWhileExp extends WhileExp with DeliteOpsExp {
     case _ => super.symsFreq(e)
   }
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     case Reflect(e@DeliteWhile(cond, block), u, es) => {
       if (f.hasContext) 
         __whileDo(f.reflectBlock(cond), f.reflectBlock(block))

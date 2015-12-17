@@ -15,72 +15,72 @@ trait OptiCollections extends OptiMLApplication {
   abstract class CSeq[A] extends Record
 
   object CSeq {
-    def fromArray[A:Manifest](a: Rep[DeliteArray[A]]) = sequence_fromArray(a)
+    def fromArray[A:Typ](a: Rep[DeliteArray[A]]) = sequence_fromArray(a)
   }
 
-  implicit def collectionsSeqToSeqOps[A:Manifest](x: Rep[CSeq[A]]) = new OptiCollectionsSeqClass(x)
-  class OptiCollectionsSeqClass[A:Manifest](x: Rep[CSeq[A]]) {
+  implicit def collectionsSeqToSeqOps[A:Typ](x: Rep[CSeq[A]]) = new OptiCollectionsSeqClass(x)
+  class OptiCollectionsSeqClass[A:Typ](x: Rep[CSeq[A]]) {
     def apply(n: Rep[Int]): Rep[A] = sequence_apply(x,n)
-    def map[B:Manifest](f: Rep[A] => Rep[B]) = sequence_map(x,f)
+    def map[B:Typ](f: Rep[A] => Rep[B]) = sequence_map(x,f)
     def reduce(f: (Rep[A],Rep[A]) => Rep[A])(implicit zero: Rep[A]) = sequence_reduce(x,f,zero)
   }
 
-  def sequence_apply[A:Manifest](x: Rep[CSeq[A]], n: Rep[Int]): Rep[A]
-  def sequence_fromArray[A:Manifest](x: Rep[DeliteArray[A]]): Rep[CSeq[A]]
-  def sequence_map[A:Manifest,B:Manifest](x: Rep[CSeq[A]], f: Rep[A] => Rep[B]): Rep[CSeq[B]]
-  def sequence_reduce[A:Manifest](x: Rep[CSeq[A]], f: (Rep[A],Rep[A]) => Rep[A], zero: Rep[A]): Rep[A]
+  def sequence_apply[A:Typ](x: Rep[CSeq[A]], n: Rep[Int]): Rep[A]
+  def sequence_fromArray[A:Typ](x: Rep[DeliteArray[A]]): Rep[CSeq[A]]
+  def sequence_map[A:Typ,B:Typ](x: Rep[CSeq[A]], f: Rep[A] => Rep[B]): Rep[CSeq[B]]
+  def sequence_reduce[A:Typ](x: Rep[CSeq[A]], f: (Rep[A],Rep[A]) => Rep[A], zero: Rep[A]): Rep[A]
 
 
   object CMap {
-    def empty[K:Manifest,V:Manifest]() = map_fromArray(DeliteArray[(K,V)](0))
-    def fromArray[K:Manifest,V:Manifest](data: Rep[DeliteArray[(K,V)]]) = map_fromArray(data)
+    def empty[K:Typ,V:Typ]() = map_fromArray(DeliteArray[(K,V)](0))
+    def fromArray[K:Typ,V:Typ](data: Rep[DeliteArray[(K,V)]]) = map_fromArray(data)
   }
 
-  implicit def collectionsMapToMapOps[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]) = new OptiCollectionsMapClass(x)
-  class OptiCollectionsMapClass[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]) {
+  implicit def collectionsMapToMapOps[K:Typ,V:Typ](x: Rep[CMap[K,V]]) = new OptiCollectionsMapClass(x)
+  class OptiCollectionsMapClass[K:Typ,V:Typ](x: Rep[CMap[K,V]]) {
     def head = map_head(x)
     def keys = map_keys(x)
     def values = map_values(x)
-    def map[K2:Manifest,V2:Manifest](f: Rep[(K,V)] => Rep[(K2,V2)]) = map_map(x,f)
+    def map[K2:Typ,V2:Typ](f: Rep[(K,V)] => Rep[(K2,V2)]) = map_map(x,f)
     def reduce(f: (Rep[(K,V)],Rep[(K,V)]) => Rep[(K,V)])(implicit zero: Rep[(K,V)]) = map_reduce(x,f,zero)
     def filter(f: Rep[(K,V)] => Rep[Boolean]) = map_filter(x,f)
     def find(f: Rep[(K,V)] => Rep[Boolean]) = map_find(x,f)
   }
 
-  def map_fromArray[K:Manifest,V:Manifest](data: Rep[DeliteArray[(K,V)]]): Rep[CMap[K,V]]
-  def map_head[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]): Rep[(K,V)]
-  def map_keys[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]): Rep[CSeq[K]]
-  def map_values[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]): Rep[CSeq[V]]
-  def map_map[K:Manifest,V:Manifest,K2:Manifest,V2:Manifest](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[(K2,V2)]): Rep[CMap[K2,V2]]
-  def map_reduce[K:Manifest,V:Manifest](x: Rep[CMap[K,V]], f: (Rep[(K,V)],Rep[(K,V)]) => Rep[(K,V)], zero: Rep[(K,V)]): Rep[(K,V)]
-  def map_filter[K:Manifest,V:Manifest](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]): Rep[CMap[K,V]]
-  def map_find[K:Manifest,V:Manifest](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]): Rep[(K,V)]
+  def map_fromArray[K:Typ,V:Typ](data: Rep[DeliteArray[(K,V)]]): Rep[CMap[K,V]]
+  def map_head[K:Typ,V:Typ](x: Rep[CMap[K,V]]): Rep[(K,V)]
+  def map_keys[K:Typ,V:Typ](x: Rep[CMap[K,V]]): Rep[CSeq[K]]
+  def map_values[K:Typ,V:Typ](x: Rep[CMap[K,V]]): Rep[CSeq[V]]
+  def map_map[K:Typ,V:Typ,K2:Typ,V2:Typ](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[(K2,V2)]): Rep[CMap[K2,V2]]
+  def map_reduce[K:Typ,V:Typ](x: Rep[CMap[K,V]], f: (Rep[(K,V)],Rep[(K,V)]) => Rep[(K,V)], zero: Rep[(K,V)]): Rep[(K,V)]
+  def map_filter[K:Typ,V:Typ](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]): Rep[CMap[K,V]]
+  def map_find[K:Typ,V:Typ](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]): Rep[(K,V)]
 
-  def infix_key[K:Manifest,V:Manifest](x: Rep[(K,V)]): Rep[K]
-  def infix_value[K:Manifest,V:Manifest](x: Rep[(K,V)]): Rep[V]
+  def infix_key[K:Typ,V:Typ](x: Rep[(K,V)]): Rep[K]
+  def infix_value[K:Typ,V:Typ](x: Rep[(K,V)]): Rep[V]
 
 }
 
 trait OptiCollectionsExp extends OptiCollections with OptiMLApplicationRunner {
   
-  private def infix_data[A:Manifest](x: Rep[CSeq[A]]) = field[DeliteArray[A]](x, "data")
-  def sequence_apply[A:Manifest](x: Rep[CSeq[A]], n: Rep[Int]) = x.data.apply(n)
-  def sequence_fromArray[A:Manifest](x: Rep[DeliteArray[A]]) = struct(classTag[CSeq[A]], "data" -> x)
-  def sequence_map[A:Manifest,B:Manifest](x: Rep[CSeq[A]], f: Rep[A] => Rep[B]) = CSeq.fromArray(x.data.map(f))
-  def sequence_reduce[A:Manifest](x: Rep[CSeq[A]], f: (Rep[A],Rep[A]) => Rep[A], zero: Rep[A]) = x.data.reduce(f,zero)
+  private def infix_data[A:Typ](x: Rep[CSeq[A]]) = field[DeliteArray[A]](x, "data")
+  def sequence_apply[A:Typ](x: Rep[CSeq[A]], n: Rep[Int]) = x.data.apply(n)
+  def sequence_fromArray[A:Typ](x: Rep[DeliteArray[A]]) = struct(classTag[CSeq[A]], "data" -> x)
+  def sequence_map[A:Typ,B:Typ](x: Rep[CSeq[A]], f: Rep[A] => Rep[B]) = CSeq.fromArray(x.data.map(f))
+  def sequence_reduce[A:Typ](x: Rep[CSeq[A]], f: (Rep[A],Rep[A]) => Rep[A], zero: Rep[A]) = x.data.reduce(f,zero)
 
-  private def infix_data[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]) = field[DeliteArray[(K,V)]](x, "data")
-  def map_fromArray[K:Manifest,V:Manifest](data: Rep[DeliteArray[(K,V)]]) = struct(classTag[CMap[K,V]], "data" -> data)
-  def map_head[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]) = x.data.apply(0)
-  def map_keys[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]) = CSeq.fromArray(x.data.map(_._1))
-  def map_values[K:Manifest,V:Manifest](x: Rep[CMap[K,V]]) = CSeq.fromArray(x.data.map(_._2))
-  def map_map[K:Manifest,V:Manifest,K2:Manifest,V2:Manifest](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[(K2,V2)]) = CMap.fromArray(x.data.map(f))
-  def map_reduce[K:Manifest,V:Manifest](x: Rep[CMap[K,V]], f: (Rep[(K,V)],Rep[(K,V)]) => Rep[(K,V)], zero: Rep[(K,V)]) = x.data.reduce(f,zero)
-  def map_filter[K:Manifest,V:Manifest](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]) = CMap.fromArray(x.data.filter(f))
-  def map_find[K:Manifest,V:Manifest](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]) = x.filter(f).head
+  private def infix_data[K:Typ,V:Typ](x: Rep[CMap[K,V]]) = field[DeliteArray[(K,V)]](x, "data")
+  def map_fromArray[K:Typ,V:Typ](data: Rep[DeliteArray[(K,V)]]) = struct(classTag[CMap[K,V]], "data" -> data)
+  def map_head[K:Typ,V:Typ](x: Rep[CMap[K,V]]) = x.data.apply(0)
+  def map_keys[K:Typ,V:Typ](x: Rep[CMap[K,V]]) = CSeq.fromArray(x.data.map(_._1))
+  def map_values[K:Typ,V:Typ](x: Rep[CMap[K,V]]) = CSeq.fromArray(x.data.map(_._2))
+  def map_map[K:Typ,V:Typ,K2:Typ,V2:Typ](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[(K2,V2)]) = CMap.fromArray(x.data.map(f))
+  def map_reduce[K:Typ,V:Typ](x: Rep[CMap[K,V]], f: (Rep[(K,V)],Rep[(K,V)]) => Rep[(K,V)], zero: Rep[(K,V)]) = x.data.reduce(f,zero)
+  def map_filter[K:Typ,V:Typ](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]) = CMap.fromArray(x.data.filter(f))
+  def map_find[K:Typ,V:Typ](x: Rep[CMap[K,V]], f: Rep[(K,V)] => Rep[Boolean]) = x.filter(f).head
 
-  def infix_key[K:Manifest,V:Manifest](x: Rep[(K,V)]) = x._1
-  def infix_value[K:Manifest,V:Manifest](x: Rep[(K,V)]) = x._2
+  def infix_key[K:Typ,V:Typ](x: Rep[(K,V)]) = x._1
+  def infix_value[K:Typ,V:Typ](x: Rep[(K,V)]) = x._2
 
 }
 

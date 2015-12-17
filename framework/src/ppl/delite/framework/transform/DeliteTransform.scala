@@ -36,7 +36,7 @@ trait DeliteTransform extends LoweringTransform {
    */
    
    // investigate: is this necessary?
-   def reflectTransformed[A:Manifest](t: Transformer, x: Exp[A], u: Summary, es: List[Exp[Any]])(implicit ctx: SourceContext): Exp[A] = {
+   def reflectTransformed[A:Typ](t: Transformer, x: Exp[A], u: Summary, es: List[Exp[Any]])(implicit ctx: SourceContext): Exp[A] = {
      reflectMirrored(Reflect(DUnsafeImmutable(x), mapOver(t,u), t(es)))(mtype(manifest[A]), ctx)        
    }    
 }

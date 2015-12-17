@@ -71,7 +71,7 @@ abstract class DeliteCollection[T] {
   def dcUpdate(idx: Int, x: T)
 }
 
-class ArrayColl[T: Manifest](val length: Int) extends DeliteCollection[T] {
+class ArrayColl[T:Manifest](val length: Int) extends DeliteCollection[T] {
   val _data = new Array[T](length)
   def foreach[U](f: T => U) = _data.foreach[U](f)
   def size = length

@@ -11,7 +11,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
   val IR: Expressions
   import IR._
   
-  def nullValue[A](tp: Manifest[A]): String = {
+  def nullValue[A](tp: Typ[A]): String = {
     assert(!isPurePrimitiveType(tp))
     if (remap(tp) == "string") "string(\"\")"
     else if (cppMemMgr == "refcnt") remap(tp) + "(nullptr)"
@@ -20,11 +20,11 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
 
   // Hack: Some cases in the transfer functions, we want to check if the type is a primitive type and not string.
   //       This is a consequence of making string a primitive type to avoid memory management.
-  def isPurePrimitiveType[A](tp: Manifest[A]): Boolean = {
+  def isPurePrimitiveType[A](tp: Typ[A]): Boolean = {
     isPrimitiveType(tp) && remap(tp) != "string"
   }
 
-  override def emitSend(tp: Manifest[_], peer: Targets.Value): (String,String) = peer match {
+  override def emitSend(tp: Typ[_], peer: Targets.Value): (String,String) = peer match {
     case Targets.JVM =>
       if (tp.erasure == classOf[Variable[AnyVal]]) {
         val out = new StringBuilder
@@ -54,7 +54,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
         out.append(signature + " {\n")
         out.append("\tif(sym == %s) return NULL;\n".format(nullValue(tp)))
         var args = ""
-        for(elem <- encounteredStructs(structName(tp))._2) {
+        for(elem <- encounteredStructs(structName(tp))) {
           val elemtp = baseType(elem._2)
           if(isPrimitiveType(elemtp)) {
             args = args + JNITypeDescriptor(elemtp)
@@ -88,8 +88,8 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
         else
           out.append("\tjclass cls = env->FindClass(\"generated/scala/%s\");\n".format(remapHost(tp).replaceAll(hostTarget,"")))
         out.append("\tjmethodID mid = env->GetMethodID(cls,\"<init>\",\"(%s)V\");\n".format(args))
-        out.append("\tjobject obj = env->NewObject(cls,mid,%s);\n".format(encounteredStructs(structName(tp))._2.map(_._1).mkString(",")))
-        for(elem <- encounteredStructs(structName(tp))._2 if !isPrimitiveType(baseType(elem._2))) 
+        out.append("\tjobject obj = env->NewObject(cls,mid,%s);\n".format(encounteredStructs(structName(tp)).map(_._1).mkString(",")))
+        for(elem <- encounteredStructs(structName(tp)) if !isPrimitiveType(baseType(elem._2)))
           out.append("\tenv->DeleteLocalRef(" + elem._1 + ");\n")
         out.append("\treturn obj;\n")
         out.append("}\n")
@@ -180,7 +180,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
           out.append("\tjclass cls = env->FindClass(\"generated/scala/container/HashMapImpl$mc%s$sp\");\n".format(JNITypeDescriptor(tp_key)))
         else
           out.append("\tjclass cls = env->FindClass(\"generated/scala/container/HashMapImpl\");\n")
-        out.append("\tjmethodID mid = env->GetMethodID(cls,\"<init>\",\"(IILscala/reflect/Manifest;)V\");\n")
+        out.append("\tjmethodID mid = env->GetMethodID(cls,\"<init>\",\"(IILscala/reflect/Typ;)V\");\n")
         out.append("\tjobject obj = env->NewObject(cls,mid,sym->indsz(),sym->datasz(),m);\n")
         out.append("\tfor(int i=0; i<sym->size(); i++) {\n")
         out.append("\t\t%s jkey = sendCPPtoJVM_%s(env,keys[i]);\n".format(JNIType(tp_key),mangledName(remapHost(tp_key))))
@@ -197,7 +197,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
     case _ => super.emitSend(tp, peer)
   }
 
-  override def emitRecv(tp: Manifest[_], peer: Targets.Value): (String,String) = {
+  override def emitRecv(tp: Typ[_], peer: Targets.Value): (String,String) = {
     if (peer == Targets.JVM) {
       if (tp.erasure == classOf[Variable[AnyVal]]) {
         val out = new StringBuilder
@@ -232,7 +232,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
         else
           out.append("\t%s %ssym = new %s();\n".format(remapHost(tp),addRef(tp),remapHost(tp)))
         out.append("\tjclass cls = env->GetObjectClass(obj);\n")
-        for(elem <- encounteredStructs(structName(tp))._2) {
+        for(elem <- encounteredStructs(structName(tp))) {
           val elemtp = baseType(elem._2)
           if(isPrimitiveType(elemtp)) {
             if(Config.generateSerializable) {
@@ -265,7 +265,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
           }
           out.append("\tsym->%s = %s;\n".format(elem._1,elem._1))
         }
-        for(elem <- encounteredStructs(structName(tp))._2 if !isPurePrimitiveType(baseType(elem._2))) 
+        for(elem <- encounteredStructs(structName(tp)) if !isPurePrimitiveType(baseType(elem._2)))
           out.append("\tenv->DeleteLocalRef(j_" + elem._1 + ");\n")
         out.append("\treturn sym;\n")
         out.append("}\n")
@@ -334,7 +334,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
   }
 
   //TODO: How to implement sendView to JVM?
-  override def emitSendView(tp: Manifest[_], peer: Targets.Value): (String,String) = {
+  override def emitSendView(tp: Typ[_], peer: Targets.Value): (String,String) = {
     if (peer == Targets.JVM) {
       if (tp.erasure == classOf[Variable[AnyVal]]) {
         val out = new StringBuilder
@@ -381,7 +381,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
       super.emitSendView(tp, peer)
   }
 
-  override def emitRecvView(tp: Manifest[_], peer: Targets.Value): (String,String) = {
+  override def emitRecvView(tp: Typ[_], peer: Targets.Value): (String,String) = {
     if (peer == Targets.JVM) {
       if (tp.erasure == classOf[Variable[AnyVal]]) {
         val out = new StringBuilder
@@ -448,7 +448,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
   }
 
 
-  override def emitSendUpdate(tp: Manifest[_], peer: Targets.Value): (String,String) = {
+  override def emitSendUpdate(tp: Typ[_], peer: Targets.Value): (String,String) = {
     if (peer == Targets.JVM) {
       if (tp.erasure == classOf[Variable[AnyVal]]) {
         val out = new StringBuilder
@@ -475,7 +475,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
         out.append(signature + " {\n")
         out.append("\tjclass cls = env->GetObjectClass(obj);\n")
         var args = ""
-        for(elem <- encounteredStructs(structName(tp))._2) {
+        for(elem <- encounteredStructs(structName(tp))) {
           val elemtp = baseType(elem._2)
           if(isPrimitiveType(elemtp)) {
             out.append("\tjmethodID mid_%s = env->GetMethodID(cls,\"%s_$eq\",\"(%s)V\");\n".format(elem._1,elem._1,JNITypeDescriptor(elemtp)))
@@ -497,7 +497,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
             out.append("\tenv->CallVoidMethod(obj,mid_%s_setter,obj_%s);\n".format(elem._1,elem._1))
           }
         }
-        for(elem <- encounteredStructs(structName(tp))._2 if !isPurePrimitiveType(baseType(elem._2))) 
+        for(elem <- encounteredStructs(structName(tp)) if !isPurePrimitiveType(baseType(elem._2)))
           out.append("\tenv->DeleteLocalRef(obj_" + elem._1 + ");\n")
         out.append("}\n")
         (signature+";\n", out.toString)
@@ -541,7 +541,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
       super.emitSendUpdate(tp, peer)
   }
 
-  override def emitRecvUpdate(tp: Manifest[_], peer: Targets.Value): (String,String) = {
+  override def emitRecvUpdate(tp: Typ[_], peer: Targets.Value): (String,String) = {
     if (peer == Targets.JVM) {
       if (tp.erasure == classOf[Variable[AnyVal]]) {
         val out = new StringBuilder
@@ -569,7 +569,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
         out.append(signature + " {\n")
         out.append("\tjclass cls = env->GetObjectClass(obj);\n")
         var args = ""
-        for(elem <- encounteredStructs(structName(tp))._2) {
+        for(elem <- encounteredStructs(structName(tp))) {
           val elemtp = baseType(elem._2)
           if(isPrimitiveType(elemtp)) {
             out.append("\tjmethodID mid_%s = env->GetMethodID(cls,\"%s\",\"()%s\");\n".format(elem._1,elem._1,JNITypeDescriptor(elemtp)))
@@ -587,7 +587,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
             out.append("\trecvUpdateCPPfromJVM_%s(env,obj_%s,sym->%s);\n".format(mangledName(remapHost(elemtp)),elem._1,elem._1))
           }
         }
-        for(elem <- encounteredStructs(structName(tp))._2 if !isPurePrimitiveType(baseType(elem._2))) 
+        for(elem <- encounteredStructs(structName(tp)) if !isPurePrimitiveType(baseType(elem._2)))
           out.append("\tenv->DeleteLocalRef(obj_" + elem._1 + ");\n")
         out.append("}\n")
         (signature+";\n", out.toString)
@@ -627,7 +627,7 @@ trait DeliteCppHostTransfer extends CppHostTransfer {
       super.emitRecvUpdate(tp, peer)
   }
 
-  override def JNITypeDescriptor[A](m: Manifest[A]): String = {
+  override def JNITypeDescriptor[A](m: Typ[A]): String = {
     if(isArrayType(m)) {
       "[" + JNITypeDescriptor(m.typeArguments.head)
     }

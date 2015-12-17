@@ -10,21 +10,21 @@ trait DeliteIfThenElseExp extends IfThenElseFatExp with DeliteOpsExp {
 
   // there is a lot of code duplication between DeliteIfThenElse and IfThenElse in lms -- do we really need a separate DeliteIfThenElse?
 
-  case class DeliteIfThenElse[T:Manifest](cond: Exp[Boolean], thenp: Block[T], elsep: Block[T], flat: Boolean) extends DeliteOpCondition[T]{
+  case class DeliteIfThenElse[T:Typ](cond: Exp[Boolean], thenp: Block[T], elsep: Block[T], flat: Boolean) extends DeliteOpCondition[T]{
     val m = manifest[T]
   }
 
-  override def __ifThenElse[T:Manifest](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit ctx: SourceContext) = delite_ifThenElse(cond, thenp, elsep, false, true)
+  override def __ifThenElse[T:Typ](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit ctx: SourceContext) = delite_ifThenElse(cond, thenp, elsep, false, true)
 
   // a 'flat' if is treated like any other statement in code motion, i.e. code will not be pushed explicitly into the branches
-  def flatIf[T:Manifest](cond: Rep[Boolean])(thenp: => Rep[T])(elsep: => Rep[T]) = delite_ifThenElse(cond, thenp, elsep, true, true)
+  def flatIf[T:Typ](cond: Rep[Boolean])(thenp: => Rep[T])(elsep: => Rep[T]) = delite_ifThenElse(cond, thenp, elsep, true, true)
 
-  def delite_ifThenElse[T:Manifest](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T], flat: Boolean, controlFlag: Boolean)(implicit ctx: SourceContext): Rep[T] = cond match {
+  def delite_ifThenElse[T:Typ](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T], flat: Boolean, controlFlag: Boolean)(implicit ctx: SourceContext): Rep[T] = cond match {
       // TODO: need to handle vars differently, this could be unsound  <--- don't understand ...
     case Const(true) => thenp
     case Const(false) => elsep
     case Def(DBooleanNegate(a)) => delite_ifThenElse(a, elsep, thenp, flat, controlFlag)
-    case Def(DNotEqual(a,b)) => delite_ifThenElse(delite_equals(a,b), elsep, thenp, flat, controlFlag)
+    case Def(e@DNotEqual(a,b)) => delite_ifThenElse(delite_equals(a,b)(e.mA, e.mB, ctx), elsep, thenp, flat, controlFlag)
     case _ =>
       val saveConditionalScope = conditionalScope
       conditionalScope = controlFlag
@@ -36,12 +36,12 @@ trait DeliteIfThenElseExp extends IfThenElseFatExp with DeliteOpsExp {
       reflectEffectInternal(DeliteIfThenElse(cond,a,b,flat), ae orElse be)
   }
 
-  override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = e match {
+  override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = e match {
     case e@DeliteIfThenElse(c,a,b,h) => DeliteIfThenElse(f(c),f(a),f(b),h)(mtype(e.m))
     case _ => super.mirrorDef(e,f)
   }
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     case Reflect(e@DeliteIfThenElse(c,a,b,h), u, es) =>
       if (f.hasContext)
         delite_ifThenElse(f(c),f.reflectBlock(a),f.reflectBlock(b),h,false)(mtype(e.m), ctx)

@@ -57,7 +57,7 @@ trait DateOpsExp extends DateOps with BaseExp { this: OptiQLExp =>
   def dateNotEqual(ld: Rep[Date], rd: Rep[Date]) = optiql_date_ne(ld,rd)
 
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     /*case DateObjectApply(str) => dateObjectApply(f(str))
     case DateLessThan(ld,rd) => dateLessThan(f(ld),f(rd))
     case DateLessThanEqual(ld,rd) => dateLessThanEqual(f(ld),f(rd))
@@ -106,7 +106,7 @@ trait DateImplOpsStandard extends DateImplOps with DeliteStructsExp { this: Opti
   private def infix_toDate(d: Rep[Int]): Rep[Date] = d.asInstanceOf[Rep[Date]] //struct(classTag[Date], "value" -> d)
   private def infix_toInt(d: Rep[Date]): Rep[Int] = d.asInstanceOf[Rep[Int]] //field[Int](d, "value")
 
-  /*override def unapplyStructType[T:Manifest]: Option[(StructTag[T], List[(String,Manifest[_])])] = manifest[T] match {
+  /*override def unapplyStructType[T:Typ]: Option[(StructTag[T], List[(String,Typ[_])])] = manifest[T] match {
     case t if t.erasure == classOf[Date] => Some(classTag(t), List("value" -> manifest[Int]))
     case _ => super.unapplyStructType
   }*/

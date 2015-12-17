@@ -112,7 +112,7 @@ trait DeliteCodegen extends GenericFatCodegen with BaseGenStaticData with ppl.de
     stream.println("]")
   }
 
-  def runTransformations[A:Manifest](b: Block[A]): Block[A] = {
+  def runTransformations[A:Typ](b: Block[A]): Block[A] = {
     printlog("DeliteCodegen: applying transformations")
     var curBlock = b
     printlog("  Transformers: " + transformers)
@@ -136,7 +136,7 @@ trait DeliteCodegen extends GenericFatCodegen with BaseGenStaticData with ppl.de
   def emitBlockHeader(syms: List[Sym[Any]], appName: String) { }
   def emitBlockFooter(result: Exp[Any]) { }
 
-  def emitSource[A:Manifest](args: List[Sym[_]], body: Block[A], className: String, stream: PrintWriter): List[(Sym[Any],Any)] = {
+  def emitSource[A:Typ](args: List[Sym[_]], body: Block[A], className: String, stream: PrintWriter): List[(Sym[Any],Any)] = {
     val y = runTransformations(body)
     val staticData = getFreeDataBlock(y)
 

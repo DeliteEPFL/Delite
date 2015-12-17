@@ -176,7 +176,7 @@ def liftClass(impls_dir, fname, fileOut):
         l = l + "  def " + lclazz + "_" + f + "(__x: Rep[" + clazz + "]) = FieldRead["+ types[f] +"](__x, \"" + f + "\", \"" + types[f] + "\")\n"
     l = l + "\n"
     #emit Mirror
-    l = l + "  override def mirror[A:Manifest](e: Def[A], f: Transformer): Exp[A] = e match {\n"
+    l = l + "  override def mirror[A:Typ](e: Def[A], f: Transformer): Exp[A] = e match {\n"
     l = l + "    case _ => super.mirror(e,f)\n"
     l = l + "  }\n"
     l = l + "}\n\n"

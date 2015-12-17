@@ -9,7 +9,7 @@ trait DeliteReductionOpsExp extends BaseFatExp {
    * Interface for binary reduction ops that write to the lhs. Instances of this interface
    * will be checked for and safely handled inside DeliteOpForeachReduce.
    */
-  abstract class DeliteReduction[L:Manifest, R:Manifest] extends Def[Unit] {
+  abstract class DeliteReduction[L:Typ, R:Typ] extends Def[Unit] {
     /* variable being reduced - this must be mutable! */
     val lhs: Exp[L]    
     /* zero value of the reduction */

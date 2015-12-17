@@ -1,7 +1,7 @@
 package ppl.delite.framework.transform
 
 import java.io._
-import reflect.{Manifest, SourceContext}
+import reflect.SourceContext
 import scala.lms.common._
 import scala.lms.internal.{AbstractSubstTransformer,Transforming}
 import ppl.delite.framework.DeliteApplication
@@ -28,7 +28,7 @@ trait ForeachReduceTransformExp extends DeliteTransform
    */
   case class TransformedForeach(size: Exp[Int], func: Exp[Int] => Exp[Unit]) extends DeliteOpIndexedLoop 
   
-  case class TransformedReduce[R:Manifest](oldV: Sym[Int], size: Exp[Int], zero: Block[R], rhs: Block[R], rFunc: (Exp[R],Exp[R]) => Exp[R]) extends DeliteOpReduceLike[R] {
+  case class TransformedReduce[R:Typ](oldV: Sym[Int], size: Exp[Int], zero: Block[R], rhs: Block[R], rFunc: (Exp[R],Exp[R]) => Exp[R]) extends DeliteOpReduceLike[R] {
     lazy val body: Def[R] = copyBodyOrElse(DeliteReduceElem[R](
       func = t.withSubstScope((oldV -> v)) { t.transformBlock(this.rhs) },
       accInit = reifyEffects(this.accInit),
@@ -42,7 +42,7 @@ trait ForeachReduceTransformExp extends DeliteTransform
     val mR = manifest[R]
   }
       
-  def transformForeachReduceToLoops[A:Manifest](s: Sym[_], fr: DeliteOpForeachReduce[_]): Exp[Unit] = {   
+  def transformForeachReduceToLoops[A:Typ](s: Sym[_], fr: DeliteOpForeachReduce[_]): Exp[Unit] = {
     // NOTE: because we only remove the reductions from the foreach function, and not the entire dependency
     // chain leading up to it, we may end up without useless work in the foreach if it is not fused back together
     // with the reductions.
@@ -63,12 +63,12 @@ trait ForeachReduceTransformExp extends DeliteTransform
     reflectEffect(z, summarizeEffects(z.body.asInstanceOf[DeliteForeachElem[Any]].func).star /*andAlso Simple()*/)
         
     // reductions    
-    def commit[L:Manifest,R:Manifest](dr: DeliteReduction[_,_], value: Exp[_]) {
+    def commit[L:Typ,R:Typ](dr: DeliteReduction[_,_], value: Exp[_]) {
       val r = dr.asInstanceOf[DeliteReduction[L,R]]
       r.updateValue(t(r.lhs.asInstanceOf[Exp[L]]), t(value.asInstanceOf[Exp[R]]))
     }    
     
-    def makeReduceBody[L:Manifest,R:Manifest](dr: DeliteReduction[_,_]) = {
+    def makeReduceBody[L:Typ,R:Typ](dr: DeliteReduction[_,_]) = {
       // hack! lots of type gymnastics going on here, and not all of it is happy.
       val r = dr.asInstanceOf[DeliteReduction[L,R]]      
       reflectPure(TransformedReduce[R](fr.v, t(fr.size), reifyEffects(dr.zero.asInstanceOf[Exp[R]]), reifyEffects(dr.rhs.asInstanceOf[Exp[R]]), dr.reduce.asInstanceOf[(Exp[R],Exp[R]) => Exp[R]]))
@@ -83,7 +83,7 @@ trait ForeachReduceTransformExp extends DeliteTransform
   //////////////
   // mirroring
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     // implemented as DeliteOpLoop    
     case e@TransformedForeach(s,b) => reflectPure(new { override val original = Some(f,e) } with TransformedForeach(f(s),f(b)))(mtype(manifest[A]),implicitly[SourceContext])
     case e@TransformedReduce(v,s,z,rhs,r) => 
@@ -153,7 +153,7 @@ trait ForeachReduceTransformer extends ForwardPassTransformer {
     else (nextSubst.isEmpty && runs > 0) // super.isDone
   }
   
-  override def runOnce[A:Manifest](b: Block[A]): Block[A] = {
+  override def runOnce[A:Typ](b: Block[A]): Block[A] = {
     // deliteReductions is lazy, so first run through and touch them to make sure they are evaluated before we scrub the effects
     globalDefs.foreach { d => d.rhs match {
       case Reflect(x: DeliteOpForeachReduce[_],_,_) => x.deliteReductions

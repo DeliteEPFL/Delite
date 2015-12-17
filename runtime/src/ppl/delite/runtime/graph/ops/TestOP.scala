@@ -31,7 +31,7 @@ class TestOP(kernel: String)(deps: DeliteOP*) extends OP_Executable {
 
 }
 
-class TestSingle[T: Manifest](kernel: String)(deps: DeliteOP*)(inputs: DeliteOP*)
+class TestSingle[T:Manifest](kernel: String)(deps: DeliteOP*)(inputs: DeliteOP*)
         extends OP_Single("", kernel, null) {
 
   override val id = System.identityHashCode(this).toString

@@ -71,11 +71,12 @@ trait DeliteILExp extends DeliteIL with DeliteILScalaOpsPkgExp with DeliteILOpsE
 trait DeliteILCodeGenBase extends GenericFatCodegen with SchedulingOpt {
 
   val IR: DeliteApplication with DeliteILExp
+  import IR.{Typ}
   override def initialDefs = IR.deliteGenerator.availableDefs
 
   def dsmap(line: String) = line
 
-  override def remap[A](m: Manifest[A]): String = m.erasure.getSimpleName match {
+  override def remap[A](m: Typ[A]): String = m.erasure.getSimpleName match {
     case "DeliteCollection" => IR.structName(m)
     case s if s.contains("$") => s // due to synthetically generated domain-specific types in the restaged program
     case _ => super.remap(m)

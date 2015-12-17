@@ -11,8 +11,10 @@ import scala.lms.common._
 // This file contains the low-level Delite constructs, for the user-facing
 // operations check DeliteOps.scala.
 
-trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLoopMappingExp {
+trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLoopMappingExp with PrimitiveOpsExp with BooleanOpsExp {
 
+  // FIXME temp import until we refactor DeliteOps
+  implicit def deliteCollectionTyp[T:Typ]: Typ[DeliteCollection[T]]
 
   /* 
    * Markers to tell Delite op code generation what kind of strategy to use.
@@ -29,7 +31,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   def frtype[A,B](o:Fractional[A]): Fractional[B] = o.asInstanceOf[Fractional[B]]
 
 
-  abstract class DefWithManifest[A:Manifest,R:Manifest] extends Def[R] {
+  abstract class DefWithManifest[A:Typ,R:Typ] extends Def[R] {
     val mA = manifest[A]
     val mR = manifest[R]
   }
@@ -42,7 +44,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
     def original: Option[(Transformer,Def[_])] = None // we should have type OpType, really but then it needs to be specified in mirror (why?)
     def copyOrElse[B](f: OpType => B)(e: => B): B = original.map(p=>f(p._2.asInstanceOf[OpType])).getOrElse(e)
     def copyTransformedOrElse[B](f: OpType => Exp[B])(e: => Exp[B]): Exp[B] = original.map(p=>p._1(f(p._2.asInstanceOf[OpType]))).getOrElse(e)
-    def copyTransformedBlockOrElse[B:Manifest](f: OpType => Block[B])(e: => Block[B]): Block[B] = original.map(p=>p._1(f(p._2.asInstanceOf[OpType]))).getOrElse(e)
+    def copyTransformedBlockOrElse[B:Typ](f: OpType => Block[B])(e: => Block[B]): Block[B] = original.map(p=>p._1(f(p._2.asInstanceOf[OpType]))).getOrElse(e)
 
     /*
     consider z1 = VectorPlus(a,b), which could be something like z1 = Block(z2); z2 = loop(a.size) { i => a(i) + b(i) }
@@ -76,25 +78,25 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   /**
    * The base class for most data parallel Delite ops.
    */
-  abstract class DeliteOpLoop[A:Manifest](implicit ctx: SourceContext) extends AbstractLoop[A] with DeliteOp[A] {
+  abstract class DeliteOpLoop[A:Typ](implicit ctx: SourceContext) extends AbstractLoop[A] with DeliteOp[A] {
     type OpType <: DeliteOpLoop[A]
     def copyBodyOrElse(e: => Def[A]): Def[A] = original.map(p=>mirrorLoopBody(p._2.asInstanceOf[OpType].body,p._1)).getOrElse(e)
     final lazy val v: Sym[Int] = copyTransformedOrElse(_.v)(fresh[Int]).asInstanceOf[Sym[Int]]
     val numDynamicChunks:Int = 0
   }
 
-  abstract class DeliteOpAbstractSingleTask[R:Manifest](block0: => Block[R], val requireInputs: Boolean) extends DeliteOp[R] {
+  abstract class DeliteOpAbstractSingleTask[R:Typ](block0: => Block[R], val requireInputs: Boolean) extends DeliteOp[R] {
     type OpType <: DeliteOpAbstractSingleTask[R]
     final lazy val block: Block[R] = copyTransformedBlockOrElse(_.block)(block0)
   }
 
-  abstract class DeliteOpAbstractExternal[A:Manifest] extends DeliteOp[A] {
+  abstract class DeliteOpAbstractExternal[A:Typ] extends DeliteOp[A] {
     type OpType <: DeliteOpAbstractExternal[A]
     def alloc: Exp[A]
     final lazy val allocVal: Block[A] = copyTransformedBlockOrElse(_.allocVal)(reifyEffects(alloc))
   }
 
-  abstract class DeliteOpAbstractForeachReduce[A:Manifest](implicit ctx: SourceContext) extends DeliteOp[Unit]  { //DeliteOpLoop[Unit] {
+  abstract class DeliteOpAbstractForeachReduce[A:Typ](implicit ctx: SourceContext) extends DeliteOp[Unit]  { //DeliteOpLoop[Unit] {
     type OpType <: DeliteOpAbstractForeachReduce[A]
     def funcBody: Block[Unit]
     def func: Exp[A] => Exp[Unit]
@@ -105,7 +107,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
     val numDynamicChunks:Int
   }
 
-  case class DeliteForeachElem[A:Manifest] (
+  case class DeliteForeachElem[A:Typ] (
     func: Block[A],
     numDynamicChunks: Int
     //sync: Block[List[Any]] // FIXME: don't want to create lists at runtime...
@@ -118,7 +120,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   // used only for ParBuffer operations
   // dc_append, dc_set_logical_size, dc_alloc, and dc_copy only need to be
   // overridden if the DeliteParallelStrategy is ParBuffer
-  case class DeliteBufferElem[A:Manifest, I:Manifest, CA:Manifest](
+  case class DeliteBufferElem[A:Typ, I:Typ, CA:Typ](
     // -- bound vars
     eV: Sym[A], //element to be added
     sV: Sym[Int], //size
@@ -143,7 +145,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
     val mCA = manifest[CA]
   }
 
-  case class DeliteCollectElem[A:Manifest, I <: DeliteCollection[A]:Manifest, CA <: DeliteCollection[A]:Manifest](
+  case class DeliteCollectElem[A:Typ, I <: DeliteCollection[A]:Typ, CA <: DeliteCollection[A]:Typ](
     func: Block[A],
     cond: List[Block[Boolean]] = Nil,
     par: DeliteParallelStrategy,
@@ -160,7 +162,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
     val mDCA = manifest[DeliteCollection[A]]
   }
 
-  case class DeliteReduceElem[A:Manifest](
+  case class DeliteReduceElem[A:Typ](
     func: Block[A],
     cond: List[Block[Boolean]] = Nil,
     zero: Block[A],
@@ -174,7 +176,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   }
 
   @deprecated("DeliteReduceTupleElem will be removed as soon as there's a foldElem with rFuncPar and rFuncSeq. Tuples don't need special support anymore.", "")
-  case class DeliteReduceTupleElem[A:Manifest,B:Manifest](
+  case class DeliteReduceTupleElem[A:Typ,B:Typ](
     func: (Block[A],Block[B]),
     cond: List[Block[Boolean]] = Nil,
     zero: (Block[A],Block[B]),
@@ -194,7 +196,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
     def cond: List[Block[Boolean]]
   }
 
-  case class DeliteHashCollectElem[K:Manifest,V:Manifest,I:Manifest,CV:Manifest,CI:Manifest,CCV:Manifest](
+  case class DeliteHashCollectElem[K:Typ,V:Typ,I:Typ,CV:Typ,CI:Typ,CCV:Typ](
     keyFunc: Block[K],
     valFunc: Block[V],
     cond: List[Block[Boolean]] = Nil,
@@ -211,7 +213,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
     val mCCV = manifest[CCV]
   }
 
-  case class DeliteHashReduceElem[K:Manifest,V:Manifest,I:Manifest,CV:Manifest](
+  case class DeliteHashReduceElem[K:Typ,V:Typ,I:Typ,CV:Typ](
     keyFunc: Block[K],
     valFunc: Block[V],
     cond: List[Block[Boolean]] = Nil,
@@ -227,7 +229,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
     val mCV = manifest[CV]
   }
 
-  case class DeliteHashIndexElem[K:Manifest,CV:Manifest](
+  case class DeliteHashIndexElem[K:Typ,CV:Typ](
     keyFunc: Block[K],
     cond: List[Block[Boolean]] = Nil,
     numDynamicChunks: Int
@@ -317,11 +319,11 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   }
 
   // TODO: just to make refactoring easier in case we want to change to reflectSomething
-  // def reflectPure[A:Manifest](x: Def[A]): Exp[A] = toAtom(x)
+  // def reflectPure[A:Typ](x: Def[A]): Exp[A] = toAtom(x)
 
   // alternative: leave reflectPure as above and override toAtom...
 
-  def reflectPure[A:Manifest](d: Def[A])(implicit ctx: SourceContext): Exp[A] = d match {
+  def reflectPure[A:Typ](d: Def[A])(implicit ctx: SourceContext): Exp[A] = d match {
     case x: DeliteOpLoop[_] =>
       val mutableInputs = readMutableData(d) //TODO: necessary or not??
       //val mutableInputs = Nil // readMutableData(d) TODO: necessary or not??
@@ -341,7 +343,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   // TBD: move logic from reflectPure (above) into reflectEffect?
 
   // HACK lazy val bites again: must make sure that block is evaluated!
-  override def reflectEffect[A:Manifest](d: Def[A], u: Summary)(implicit ctx: SourceContext): Exp[A] = d match {
+  override def reflectEffect[A:Typ](d: Def[A], u: Summary)(implicit ctx: SourceContext): Exp[A] = d match {
     case x: DeliteOpAbstractSingleTask[_] =>
       x.block
       super.reflectEffect(d,u)
@@ -356,7 +358,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   }
 
   // HACK lazy val bites again: must make sure that block is evaluated!
-  override def reflectMirrored[A:Manifest](zd: Reflect[A])(implicit pos: SourceContext): Exp[A] = zd match {
+  override def reflectMirrored[A:Typ](zd: Reflect[A])(implicit pos: SourceContext): Exp[A] = zd match {
     case Reflect(x:DeliteOpAbstractSingleTask[_], u, es) =>
       x.block
       super.reflectMirrored(zd)
@@ -371,7 +373,7 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   }
 
   // what about this: enable?
-  // override def reflectMutable[A:Manifest](d: Def[A]): Exp[A] = d match {
+  // override def reflectMutable[A:Typ](d: Def[A]): Exp[A] = d match {
   //   case x: DeliteOpLoop[_] =>
   //     val mutableInputs = readMutableData(d)
   //     val allocAndRead = Alloc() andAlso Read(mutableInputs)
@@ -389,12 +391,12 @@ trait DeliteOpsExpIR extends DeliteReductionOpsExp with StencilExp with NestedLo
   //////////////
   // mirroring
 
-  override def mirrorFatDef[A:Manifest](d: Def[A], f: Transformer)(implicit ctx: SourceContext): Def[A] = mirrorLoopBody(d,f) // TODO: cleanup
+  override def mirrorFatDef[A:Typ](d: Def[A], f: Transformer)(implicit ctx: SourceContext): Def[A] = mirrorLoopBody(d,f) // TODO: cleanup
 
-  def mirrorLoopBody[A:Manifest](d: Def[A], f: Transformer): Def[A] = {
+  def mirrorLoopBody[A:Typ](d: Def[A], f: Transformer): Def[A] = {
     // should this be the default apply in Transforming? note we need a manifest! but the default in Transforming seems wrong otherwise... better to catch early
-    // def fb[B:Manifest](b: Block[B]) = if (f.hasContext) reifyEffects(f.reflectBlock(b)) else f(b)
-    def fb[B:Manifest](b: Block[B]) = f(b)
+    // def fb[B:Typ](b: Block[B]) = if (f.hasContext) reifyEffects(f.reflectBlock(b)) else f(b)
+    def fb[B:Typ](b: Block[B]) = f(b)
 
     def mirrorBuffer[A,I,CA](e: DeliteBufferElem[A,I,CA]) =
       DeliteBufferElem[A,I,CA](

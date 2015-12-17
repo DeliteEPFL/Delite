@@ -10,7 +10,7 @@ import ppl.delite.framework.codegen.delite.overrides._
 import ppl.delite.framework.datastructures._
 import ppl.delite.framework.{DeliteRestageOps,DeliteRestageOpsExp}
 import ppl.delite.framework.ops.{DeliteOpsExp,DeliteCollection,DeliteCollectionOpsExp}
-import ppl.delite.framework.ScopeCommunication._
+//import ppl.delite.framework.ScopeCommunication._
 
 trait TargetRestage extends Target {
   import IR._
@@ -58,7 +58,7 @@ trait RestageFatCodegen extends GenericFatCodegen with RestageCodegen {
   val IR: Expressions with Effects with FatExpressions
   import IR._
 
-  override def emitSource[A : Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
+  override def emitSource[A : Typ](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
     val staticData = getFreeDataBlock(body)
 
     println("--RestageCodegen emitSource")
@@ -129,13 +129,13 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
   with ScalaGenDeliteArrayOps with ScalaGenDeliteStruct with DeliteScalaGenAllOverrides {
 
   val IR: Expressions with Effects with FatExpressions with DeliteRestageOpsExp
-          with DeliteCollectionOpsExp with DeliteArrayFatExp with DeliteOpsExp with DeliteAllOverridesExp
+          with DeliteCollectionOpsExp with DeliteArrayFatExp with DeliteOpsExp with DeliteAllOverridesExp with StructExp
   import IR._
   import ppl.delite.framework.Util._
 
   var inRestageStructName = false
 
-  override def remap[A](m: Manifest[A]): String = {
+  override def remap[A](m: Typ[A]): String = {
     // unvar used here to avoid having Variable types in restaged code (since we are regenerating the var definitions)
     unvar(m) match {
       case s if s.erasure.getSimpleName == "String" => "String"
@@ -144,24 +144,24 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
       case s if s.erasure.getSimpleName == "DeliteArray" && m.typeArguments(0).erasure.getSimpleName == "GIterable" && !inRestageStructName => "DeliteArray[" + restageStructName(m.typeArguments(0)) + "]"
 
       // the following cases are meant to catch all struct types and forward them to restageStructRename for proper naming
-      case s if s <:< manifest[Record] && !inRestageStructName => restageStructName(s)
-      case s if s <:< manifest[Record] => "Record"
+      case s if s <:< recordTyp && !inRestageStructName => restageStructName(s)
+      case s if s <:< recordTyp => "Record"
 
       // DeliteArray arg remapping first goes through restageStructName so we don't end up with DeliteArray[DeliteCollection[Int]] sorts of things
       // special treatment for Delite collections... can we unify this?
       case s if s.erasure.getSimpleName == "DeliteArray" => s.typeArguments(0) match {
         case StructType(_,_) if !inRestageStructName => restageStructName(s)
-        case s if s <:< manifest[Record] => restageStructName(s)
+        case s if s <:< recordTyp => restageStructName(s)
         case _ => "DeliteArray[" + remap(s.typeArguments(0)) + "]"
       }
       case s if s.erasure.getSimpleName == "DeliteArrayBuffer" => s.typeArguments(0) match {
         case StructType(_,_) if !inRestageStructName => restageStructName(s)
-        case s if s <:< manifest[Record] => restageStructName(s)
+        case s if s <:< recordTyp => restageStructName(s)
         case _ => "DeliteArrayBuffer[" + remap(s.typeArguments(0)) + "]"
       }
       case s if isSubtype(s.erasure,classOf[DeliteCollection[_]]) => s.typeArguments(0) match {
         case StructType(_,_) if !inRestageStructName => restageStructName(s)
-        case s if s <:< manifest[Record] => restageStructName(s)
+        case s if s <:< recordTyp => restageStructName(s)
         case _ => "DeliteCollection[" + remap(s.typeArguments(0)) + "]"
       }
 
@@ -188,7 +188,7 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
       super.quote(x)
   }
 
-  def quoteTag[T](tag: StructTag[T], tp: Manifest[Any]): String = tag match {
+  def quoteTag[T](tag: StructTag[T], tp: Typ[Any]): String = tag match {
     case ClassTag(name) => "ClassTag(\""+name+"\")"
     case NestClassTag(elem) => quoteTag(elem,tp) //"NestClassTag[Var,"+remap(tp)+"]("+quoteTag(elem,tp)+")" // dropping the var wrapper...
     case AnonTag(fields) => "ClassTag(\"erased\")"
@@ -196,7 +196,7 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
     case MapTag() => "MapTag()"
   }
 
-  def recordFieldLookup[T:Manifest](struct: Exp[T], nextStructTp: Manifest[_], currentStr: String, fieldNames: List[String]): String = {
+  def recordFieldLookup[T:Typ](struct: Exp[T], nextStructTp: Typ[_], currentStr: String, fieldNames: List[String]): String = {
     if (fieldNames == Nil) return currentStr
 
     val structFieldTpes = nextStructTp match {
@@ -214,12 +214,12 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
   }
 
   // variable manifests wrap our refined manifests..
-  def unvar[T](m: Manifest[T]) = {
+  def unvar[T](m: Typ[T]) = {
     if (m.erasure.getSimpleName == "Variable") {
-      m.typeArguments(0).asInstanceOf[Manifest[Any]]
+      m.typeArguments(0).asInstanceOf[Typ[Any]]
     }
     else {
-      m.asInstanceOf[Manifest[Any]]
+      m.asInstanceOf[Typ[Any]]
     }
   }
 
@@ -231,7 +231,7 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
   // our equivalent of encounteredStructs
   val restagedStructs = new scala.collection.mutable.HashSet[String]()
 
-  def withoutStructNameRemap[T](tp: Manifest[T]) = {
+  def withoutStructNameRemap[T](tp: Typ[T]) = {
     inRestageStructName = true
     val x = remap(tp)
     inRestageStructName = false
@@ -241,7 +241,7 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
   // this function produces something like:
   //   DenseVectorInt extends DeliteCollection[Int]
   //   Tuple2IntInt extends Record
-  def restageStructName[T](tp: Manifest[T]): String = {
+  def restageStructName[T](tp: Typ[T]): String = {
     // Predef.println("restageStructName called on:  " + tp.toString)
     val dsName = structName(tp) // re-use the struct renaming from LMS
     if (!restagedStructs.contains(dsName)) {
@@ -272,7 +272,7 @@ trait DeliteCodeGenRestage extends RestageFatCodegen
   }
 
   // TODO: May want to change how this function recurses (in particular a bit strange to have sym here)
-  def recordNestedLookup(sym: Exp[Any], tp: Manifest[_], currentStr: String, trace: List[AtomicTracer]): String = {
+  def recordNestedLookup(sym: Exp[Any], tp: Typ[_], currentStr: String, trace: List[AtomicTracer]): String = {
     if (trace == Nil) return currentStr
 
     val (nextTp, newStr) = trace.head match {

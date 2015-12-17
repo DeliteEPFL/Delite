@@ -8,7 +8,9 @@ import ppl.delite.framework.Config
 
 trait DeliteFileOutputStream
 
-trait DeliteFileWriterOps extends Base with DeliteArrayBufferOps {
+trait DeliteFileWriterOps extends Base with DeliteArrayBufferOps with BooleanOps {
+
+  implicit def deliteFileOutputStreamTyp: Typ[DeliteFileOutputStream]
 
   object DeliteFileWriter {
     def writeLines(path: Rep[String], numLines: Rep[Int], append: Rep[Boolean] = unit(false))(f: Rep[Int] => Rep[String])(implicit pos: SourceContext) = dfw_writeLines(path, numLines, append, f)
@@ -21,7 +23,9 @@ trait DeliteFileWriterOps extends Base with DeliteArrayBufferOps {
   def dfos_close(stream: Rep[DeliteFileOutputStream])(implicit pos: SourceContext): Rep[Unit]
 }
 
-trait DeliteFileWriterOpsExp extends DeliteFileWriterOps with RuntimeServiceOpsExp with DeliteArrayOpsExpOpt with DeliteArrayBufferOpsExp with DeliteOpsExp with DeliteMapOpsExp {
+trait DeliteFileWriterOpsExp extends DeliteFileWriterOps with RuntimeServiceOpsExp with DeliteArrayOpsExpOpt with DeliteArrayBufferOpsExp with DeliteOpsExp with DeliteMapOpsExp with BooleanOpsExp {
+
+  implicit def deliteFileOutputStreamTyp: Typ[DeliteFileOutputStream] = manifestTyp
 
   case class DeliteFileOutputStreamNew(path: Exp[String], sequential: Exp[Boolean], append: Exp[Boolean]) extends Def[DeliteFileOutputStream]
 
@@ -53,7 +57,7 @@ trait DeliteFileWriterOpsExp extends DeliteFileWriterOps with RuntimeServiceOpsE
 
   def dfos_close(stream: Exp[DeliteFileOutputStream])(implicit pos: SourceContext) = reflectWrite(stream)(DeliteFileOutputStreamClose(stream))
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     case Reflect(e@DeliteOpFileWriteLines(path,numLines,func), u, es) => reflectMirrored(Reflect(new { override val original = Some(f,e) } with DeliteOpFileWriteLines(f(path),f(numLines),f(func))(ctx), mapOver(f,u), f(es)))(mtype(manifest[A]), ctx)
     case Reflect(DeliteFileOutputStreamNew(path,s,app), u, es) => reflectMirrored(Reflect(DeliteFileOutputStreamNew(f(path),f(s),f(app)), mapOver(f,u), f(es)))(mtype(manifest[A]), ctx)
     case Reflect(DeliteFileOutputStreamWriteLine(stream,line), u, es) => reflectMirrored(Reflect(DeliteFileOutputStreamWriteLine(f(stream), f(line)), mapOver(f,u), f(es)))(mtype(manifest[A]), ctx)
@@ -77,7 +81,7 @@ trait ScalaGenDeliteFileWriterOps extends ScalaGenFat with GenericGenDeliteOps w
     case _ => super.emitNode(sym, rhs)
   }
 
-  override def remap[A](m: Manifest[A]): String = m.erasure.getSimpleName match {
+  override def remap[A](m: Typ[A]): String = m.erasure.getSimpleName match {
     case "DeliteFileOutputStream" => "generated.scala.io.DeliteFileOutputStream"
     case _ => super.remap(m)
   }
@@ -98,7 +102,7 @@ trait CGenDeliteFileWriterOps extends CGenFat {
     case _ => super.emitNode(sym, rhs)
   }
 
-  override def remap[A](m: Manifest[A]): String = m.erasure.getSimpleName match {
+  override def remap[A](m: Typ[A]): String = m.erasure.getSimpleName match {
     case "DeliteFileOutputStream" => "DeliteFileOutputStream"
     case _ => super.remap(m)
   }

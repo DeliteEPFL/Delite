@@ -60,16 +60,17 @@ trait ProfileCodeGenScala extends ProfileCodeGenBase with ScalaCodeGenPkg
   with ScalaGenDeliteTest with DeliteScalaGenAllOverrides {
 
   val IR: DeliteApplication with ProfileExp
+  import IR._
   
   def dsmap(s: String) = {
     var res = s.replaceAll("ppl.tests.scalatest.firstdsl.datastruct", "generated")
     res.replaceAll("ppl.tests.scalatest.firstdsl", "generated.scala")
   }
   
-  override def remap[A](m: Manifest[A]): String = dsmap(super.remap(m))
+  override def remap[A](m: Typ[A]): String = dsmap(super.remap(m))
   
   override def emitDataStructures(path: String) {
-    val s = File.separator
+    val s = java.io.File.separator
     val dsRoot = Config.homeDir + s+"framework"+s+"delite-test"+s+"tests"+s+
                  "ppl"+s+"tests"+s+"scalatest"+s+"firstdsl"+s+"datastruct"+s + this.toString
     

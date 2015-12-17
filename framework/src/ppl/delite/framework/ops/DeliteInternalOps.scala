@@ -31,10 +31,10 @@ trait DeliteLMSForwarderExp extends BooleanOpsExp with EqualExpBridge with Primi
   override def int_plus(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = delite_int_plus(lhs,rhs)
   override def int_minus(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = delite_int_minus(lhs,rhs)
   override def int_times(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = delite_int_times(lhs,rhs)
-  override def object_unsafe_immutable[A:Manifest](lhs: Exp[A])(implicit pos: SourceContext): Exp[A] = delite_unsafe_immutable(lhs)
+  override def object_unsafe_immutable[A:Typ](lhs: Exp[A])(implicit pos: SourceContext): Exp[A] = delite_unsafe_immutable(lhs)
   override def boolean_negate(lhs: Exp[Boolean])(implicit pos: SourceContext): Exp[Boolean] = delite_boolean_negate(lhs)
-  override def equals[A:Manifest,B:Manifest](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = delite_equals(lhs,rhs)
-  override def notequals[A:Manifest,B:Manifest](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = delite_notequals(lhs,rhs)  
+  override def equals[A:Typ,B:Typ](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = delite_equals(lhs,rhs)
+  override def notequals[A:Typ,B:Typ](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = delite_notequals(lhs,rhs)
 }
 
 
@@ -50,10 +50,10 @@ trait DeliteAnalysesOps extends Base {
   def delite_int_plus(lhs: Rep[Int], rhs: Rep[Int])(implicit pos: SourceContext): Rep[Int] 
   def delite_int_minus(lhs: Rep[Int], rhs: Rep[Int])(implicit pos: SourceContext): Rep[Int]
   def delite_int_times(lhs: Rep[Int], rhs: Rep[Int])(implicit pos: SourceContext): Rep[Int]
-  def delite_unsafe_immutable[A:Manifest](lhs: Rep[A])(implicit pos: SourceContext): Rep[A]
+  def delite_unsafe_immutable[A:Typ](lhs: Rep[A])(implicit pos: SourceContext): Rep[A]
   def delite_boolean_negate(lhs: Rep[Boolean])(implicit pos: SourceContext): Rep[Boolean]
-  def delite_equals[A:Manifest,B:Manifest](lhs: Rep[A], rhs: Rep[B])(implicit pos: SourceContext): Rep[Boolean]
-  def delite_notequals[A:Manifest,B:Manifest](lhs: Rep[A], rhs: Rep[B])(implicit pos: SourceContext): Rep[Boolean] 
+  def delite_equals[A:Typ,B:Typ](lhs: Rep[A], rhs: Rep[B])(implicit pos: SourceContext): Rep[Boolean]
+  def delite_notequals[A:Typ,B:Typ](lhs: Rep[A], rhs: Rep[B])(implicit pos: SourceContext): Rep[Boolean]
 }
 
 /**
@@ -74,44 +74,50 @@ trait DeliteInternalOpsExpBase extends DeliteAnalysesOps
   // These are the IR nodes that Delite requires internally, or for analyses.
   // They are redefinitions of a small subset of LMS common nodes. The originals should be considered deprecated for our purposes.
   case class DBooleanNegate(lhs: Exp[Boolean]) extends Def[Boolean]
-  case class DEqual[A:Manifest,B:Manifest](a: Exp[A], b: Exp[B]) extends Def[Boolean]
-  case class DNotEqual[A:Manifest,B:Manifest](a: Exp[A], b: Exp[B]) extends Def[Boolean]
+  case class DEqual[A:Typ,B:Typ](a: Exp[A], b: Exp[B]) extends Def[Boolean] {
+    def mA = typ[A]
+    def mB = typ[B]
+  }
+  case class DNotEqual[A:Typ,B:Typ](a: Exp[A], b: Exp[B]) extends Def[Boolean] {
+    def mA = typ[A]
+    def mB = typ[B]
+  }
   case class DIntPlus(lhs: Exp[Int], rhs: Exp[Int]) extends Def[Int]
   case class DIntMinus(lhs: Exp[Int], rhs: Exp[Int]) extends Def[Int]
   case class DIntTimes(lhs: Exp[Int], rhs: Exp[Int]) extends Def[Int]
   case class DIntDivide(lhs: Exp[Int], rhs: Exp[Int]) extends Def[Int]
   case class DIntMod(lhs: Exp[Int], rhs: Exp[Int]) extends Def[Int]
 
-  abstract class DefMN[T:Ordering:Manifest,A] extends Def[A] {
+  abstract class DefMN[T:Ordering:Typ,A] extends Def[A] {
     def mev = manifest[T]
     def aev = implicitly[Ordering[T]]
   }
-  case class DLessThan[T:Ordering:Manifest](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
-  case class DGreaterThan[T:Ordering:Manifest](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
+  case class DLessThan[T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
+  case class DGreaterThan[T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
 
-  case class DUnsafeImmutable[A:Manifest](o: Exp[A]) extends Def[A] { val m = manifest[A]  }
+  case class DUnsafeImmutable[A:Typ](o: Exp[A]) extends Def[A] { val m = manifest[A]  }
 
   def delite_boolean_negate(lhs: Exp[Boolean])(implicit pos: SourceContext): Exp[Boolean] = DBooleanNegate(lhs)
-  def delite_equals[A:Manifest,B:Manifest](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = DEqual(lhs, rhs)
-  def delite_notequals[A:Manifest,B:Manifest](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = DNotEqual(lhs, rhs)
+  def delite_equals[A:Typ,B:Typ](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = DEqual(lhs, rhs)
+  def delite_notequals[A:Typ,B:Typ](lhs: Exp[A], rhs: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = DNotEqual(lhs, rhs)
   def delite_int_plus(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = DIntPlus(lhs, rhs)
   def delite_int_minus(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = DIntMinus(lhs, rhs)
   def delite_int_times(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = DIntTimes(lhs, rhs)
   def delite_int_divide(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = DIntDivide(lhs, rhs)
   def delite_int_mod(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext): Exp[Int] = DIntMod(lhs, rhs)
-  def delite_less_than[T:Ordering:Manifest](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Exp[Boolean] = DLessThan(lhs, rhs)  
-  def delite_greater_than[T:Ordering:Manifest](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Exp[Boolean] = DGreaterThan(lhs, rhs)  
-  def delite_unsafe_immutable[A:Manifest](lhs: Exp[A])(implicit pos: SourceContext) = lhs match {
+  def delite_less_than[T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Exp[Boolean] = DLessThan(lhs, rhs)
+  def delite_greater_than[T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Exp[Boolean] = DGreaterThan(lhs, rhs)
+  def delite_unsafe_immutable[A:Typ](lhs: Exp[A])(implicit pos: SourceContext) = lhs match {
     // INVESTIGATE: there was an issue where Const(0).unsafeImmutable == Const(0.0). How is this possible? CSE with primitive widening?
     case c@Const(x) => c
     case s: Sym[_] if !isWritableSym(s) => lhs
     case _ => DUnsafeImmutable(lhs)
   }
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case DBooleanNegate(x) => delite_boolean_negate(f(x))
-    case DEqual(a, b) => delite_equals(f(a),f(b))
-    case DNotEqual(a, b) => delite_notequals(f(a),f(b))
+    case e@DEqual(a, b) => delite_equals(f(a),f(b))(e.mA, e.mB, pos)
+    case e@DNotEqual(a, b) => delite_notequals(f(a),f(b))(e.mA, e.mB, pos)
     case DIntPlus(x,y) => delite_int_plus(f(x),f(y))
     case DIntMinus(x,y) => delite_int_minus(f(x),f(y))
     case DIntTimes(x,y) => delite_int_times(f(x),f(y))
@@ -133,9 +139,9 @@ trait DeliteInternalOpsExpBase extends DeliteAnalysesOps
     case _ => super.mirror(e, f)
   }).asInstanceOf[Exp[A]] // why??
 
-  override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
-    case DEqual(a, b) => DEqual(f(a),f(b))
-    case DNotEqual(a, b) => DNotEqual(f(a),f(b))
+  override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
+    case e@DEqual(a, b) => DEqual(f(a),f(b))(e.mA, e.mB)
+    case e@DNotEqual(a, b) => DNotEqual(f(a),f(b))(e.mA, e.mB)
     case _ => super.mirrorDef(e,f)
   }).asInstanceOf[Def[A]]
 
@@ -168,7 +174,7 @@ trait DeliteInternalOpsExp extends DeliteInternalOpsExpBase {
 
   this: DeliteOpsExp with DeliteStructsExp => 
   
-  override def delite_equals[A:Manifest,B:Manifest](a: Exp[A], b: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = {
+  override def delite_equals[A:Typ,B:Typ](a: Exp[A], b: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = {
     if (a == b) Const(true) 
     else (a,b) match {
       case (Const(a),Const(b)) => Const(a == b)
@@ -176,7 +182,7 @@ trait DeliteInternalOpsExp extends DeliteInternalOpsExpBase {
     }
   }
 
-  override def delite_notequals[A:Manifest,B:Manifest](a: Exp[A], b: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = {
+  override def delite_notequals[A:Typ,B:Typ](a: Exp[A], b: Exp[B])(implicit pos: SourceContext): Exp[Boolean] = {
     if (a == b) Const(false)
     else (a,b) match {
       case (Const(a),Const(b)) => Const(a != b)
@@ -218,7 +224,7 @@ trait DeliteInternalOpsExp extends DeliteInternalOpsExpBase {
   }
 
   // don't let unsafeImmutable hide struct-ness
-  override def delite_unsafe_immutable[A:Manifest](lhs: Exp[A])(implicit pos: SourceContext) = lhs match {
+  override def delite_unsafe_immutable[A:Typ](lhs: Exp[A])(implicit pos: SourceContext) = lhs match {
     case Def(Struct(tag,elems)) => struct[A](tag, elems.map(t => (t._1, delite_imm_field(lhs, t._1, t._2))))
     case Def(d@Reflect(Struct(tag, elems), u, es)) => struct[A](tag, elems.map(t => (t._1, delite_imm_field(lhs, t._1, t._2))))
     case _ => super.delite_unsafe_immutable(lhs)

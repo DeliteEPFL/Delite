@@ -334,7 +334,7 @@ trait NestedLoopMappingAnalysis extends FatBlockTraversal with LoopFusionOpt wit
 
   def emitValDef(sym: Sym[Any], rhs: String) {}
 
-  def emitSource[A : Manifest](args: List[Sym[_]], body: Block[A], className: String, stream: PrintWriter): List[(Sym[Any], Any)] = {
+  def emitSource[A : Typ](args: List[Sym[_]], body: Block[A], className: String, stream: PrintWriter): List[(Sym[Any], Any)] = {
       traverseBlock(body)
       Nil
   }

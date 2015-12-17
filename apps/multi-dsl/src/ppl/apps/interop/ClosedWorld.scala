@@ -7,7 +7,7 @@ import ppl.dsl.optigraph.OptiGraph_
 import ppl.dsl.optiml.OptiML_
 import ppl.delite.framework.datastructures.DeliteArray
 import ppl.delite.framework.{BeginScopes,EndScopes}
-import ppl.delite.framework.ScopeCommunication._
+//import ppl.delite.framework.ScopeCommunication._
 
 import ppl.dsl.optigraph.NodeProperty
 

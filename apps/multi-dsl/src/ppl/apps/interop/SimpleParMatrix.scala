@@ -5,8 +5,8 @@ import Numeric.Implicits._
 
 object ParMatrix {
 
-  def apply[T:Numeric:Fractional:Manifest](numRows: Int, numCols: Int) = new ParMatrix[T](numRows, numCols)
-  def apply[T:Numeric:Fractional:Manifest](xs: ParArray[T]*) = {
+  def apply[T:Numeric:Fractional:Typ](numRows: Int, numCols: Int) = new ParMatrix[T](numRows, numCols)
+  def apply[T:Numeric:Fractional:Typ](xs: ParArray[T]*) = {
     val result = new ParMatrix[T](xs.length, xs(0).length) 
     var i = 0
     var offset = 0
@@ -18,11 +18,11 @@ object ParMatrix {
     result
   }
 
-  def fromParArray[T:Numeric:Fractional:Manifest](x: ParArray[T], n: Int) = new ParMatrix[T](x,x.length/n, n)
+  def fromParArray[T:Numeric:Fractional:Typ](x: ParArray[T], n: Int) = new ParMatrix[T](x,x.length/n, n)
 
 }
 
-class ParMatrix[@specialized T:Numeric:Fractional:Manifest](var data: ParArray[T], var numRows: Int, var numCols: Int) {
+class ParMatrix[@specialized T:Numeric:Fractional:Typ](var data: ParArray[T], var numRows: Int, var numCols: Int) {
 
   def this(_numRows: Int, _numCols: Int) {
     this(new ParArray[T](_numRows*_numCols), _numRows, _numCols)

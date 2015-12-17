@@ -347,15 +347,15 @@ trait Example12work extends OptiMLApplication {
   }
   
   // methods can use generic types, too
-  // but you have to include this ":Manifest" boilerplate
-  // Manifest is a Scala object that stores type information for T
-  def doWork2[T:Manifest](v: Rep[DenseVector[T]]) = {
+  // but you have to include this ":Typ" boilerplate
+  // Typ is a Scala object that stores type information for T
+  def doWork2[T:Typ](v: Rep[DenseVector[T]]) = {
     println("v(0) is: " + v(0))
   }
   
   // you can use the Interface[T] type to abstract over the subtype of
   // Vector being passed in, e.g. if you don't care if it's dense or sparse
-  def doWork3[T:Manifest](v: Interface[Vector[T]]) = {
+  def doWork3[T:Typ](v: Interface[Vector[T]]) = {
     println("v is a row vector: " + v.isRow)
   }
   

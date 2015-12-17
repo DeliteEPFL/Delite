@@ -41,10 +41,10 @@ trait DeliteCLikeGenVariables extends CLikeGenEffect with CLikeGenDeliteStruct {
   import IR._
 
   protected val deliteVariableString: String
-  protected def typeString(m: Manifest[_]): String
+  protected def typeString(m: Typ[_]): String
   private val generatedDeliteVariable = HashSet[String]()
 
-  private def shouldGenerate(m: Manifest[_]): Boolean = m match {
+  private def shouldGenerate(m: Typ[_]): Boolean = m match {
     case _ if (isPrimitiveType(m)) => true
     case _ if (isArrayType(m)) => true
     case _ if (encounteredStructs.contains(structName(baseType(m)))) => true
@@ -63,7 +63,7 @@ trait DeliteCLikeGenVariables extends CLikeGenEffect with CLikeGenDeliteStruct {
     stream.close()
   }
 
-  private def emitDeliteVariable(m: Manifest[_], path: String, header: PrintWriter) {
+  private def emitDeliteVariable(m: Typ[_], path: String, header: PrintWriter) {
     try {
       val mString = typeString(m)
       if(!generatedDeliteVariable.contains(mString)) {
@@ -95,7 +95,7 @@ trait DeliteCudaGenVariables extends CudaGenEffect with DeliteCLikeGenVariables 
   val IR: VariablesExp with DeliteOpsExp
   import IR._
 
-  protected def typeString(m: Manifest[_]) = deviceTarget + "Ref" + remap(m)
+  protected def typeString(m: Typ[_]) = deviceTarget + "Ref" + remap(m)
   protected val deliteVariableString: String = """
 class __T__ {
 public:
@@ -144,7 +144,7 @@ trait DeliteOpenCLGenVariables extends OpenCLGenEffect with DeliteCLikeGenVariab
 
   def reference: String = "."
 
-  protected def typeString(m: Manifest[_]) = deviceTarget + "Ref" + remap(m)
+  protected def typeString(m: Typ[_]) = deviceTarget + "Ref" + remap(m)
 
   protected val deliteVariableString: String = """
 //TODO: fill in
@@ -157,7 +157,7 @@ trait DeliteCGenVariables extends CGenEffect with DeliteCLikeGenVariables {
 
   def reference: String = "->"
 
-  protected def typeString(m: Manifest[_]) = {
+  protected def typeString(m: Typ[_]) = {
     if (cppMemMgr == "refcnt") deviceTarget + "Ref" + unwrapSharedPtr(remap(m))
     else deviceTarget + "Ref" + remap(m)
   }

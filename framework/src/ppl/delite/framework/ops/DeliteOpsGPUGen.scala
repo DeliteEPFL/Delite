@@ -107,7 +107,7 @@ trait GPUGenDeliteOps extends GPUGenLoopsFat with BaseGenDeliteOps with DeliteKe
         emitVarDef(quote(elem.buf.sV), remap(elem.buf.sV.tp), quote(op.size))
         emitBlock(elem.buf.alloc) //This will generate alloc failure exception
         emitValDef(quote(sym) + "_data", remap(getBlockResult(elem.buf.alloc).tp), quote(getBlockResult(elem.buf.alloc)))
-        emitVarDef(quote(sym) + "_size", remap(Manifest.Int), "0")
+        emitVarDef(quote(sym) + "_size", remap(intTyp), "0")
         //throw new GenerationFailedException("GPUGen: Inlined DeliteCollectElem is not supported yet due to memory allocations.\n" + quotePos(sym))
       case (sym, elem: DeliteForeachElem[_]) =>
       case (sym, elem: DeliteReduceElem[_]) =>
@@ -908,7 +908,7 @@ trait GPUGenDeliteOpsOpt extends GPUGenDeliteOps {
           emitVarDef(quote(elem.buf.sV), remap(elem.buf.sV.tp), quote(op.size))
           emitBlock(elem.buf.alloc) //This will generate alloc failure exception
           emitValDef(quote(sym) + "_data", remap(getBlockResult(elem.buf.alloc).tp), quote(getBlockResult(elem.buf.alloc)))
-          emitVarDef(quote(sym) + "_size", remap(Manifest.Int), "0")
+          emitVarDef(quote(sym) + "_size", remap(intTyp), "0")
           //throw new GenerationFailedException("GPUGen: Inlined DeliteCollectElem is not supported yet due to memory allocations.\n" + quotePos(sym))
         case (sym, elem: DeliteForeachElem[_]) =>
         case (sym, elem: DeliteReduceElem[_]) =>

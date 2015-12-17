@@ -127,7 +127,7 @@ trait ScalaGenDeliteOps extends ScalaGenLoopsFat with ScalaGenStaticDataDelite w
   def hashmapType(argType: String): String = "generated.scala.container.HashMapImpl[" + argType + "]"
   def typeCast(sym: String, to: String): String = "(" + sym + ").asInstanceOf[" + to + "]"
   def withBlock(name: String)(block: => Unit): Unit = {
-    emitValDef(name, remap(manifest[Unit]), "{")
+    emitValDef(name, remap(unitTyp), "{")
     block
     stream.println("}")
   }

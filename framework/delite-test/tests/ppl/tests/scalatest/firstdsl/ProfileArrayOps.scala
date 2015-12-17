@@ -1,6 +1,6 @@
 package ppl.tests.scalatest.firstdsl
 
-import reflect.{Manifest, SourceContext}
+import reflect.SourceContext
 import scala.lms.common.{Base, NumericOpsExp, FractionalOpsExp, PrimitiveOpsExp}
 import scala.lms.common.ScalaGenBase
 import ppl.delite.framework.ops.{DeliteCollectionOpsExp,DeliteOpsExp}
@@ -47,21 +47,21 @@ trait ProfileArrayOpsExp extends ProfileArrayOps with NumericOpsExp with Primiti
   def isProfileArray[A](x: Exp[DeliteCollection[A]]) = x.isInstanceOf[Exp[ProfileArray]]
   def asProfileArray[A](x: Exp[DeliteCollection[A]]) = x.asInstanceOf[Exp[ProfileArray]]
 
-  override def dc_size[A:Manifest](x: Exp[DeliteCollection[A]])
+  override def dc_size[A:Typ](x: Exp[DeliteCollection[A]])
     (implicit ctx: SourceContext) = {
 
     if (isProfileArray(x)) asProfileArray(x).length
     else super.dc_size(x)
   }
 
-  override def dc_apply[A:Manifest](x: Exp[DeliteCollection[A]], n: Exp[Int])
+  override def dc_apply[A:Typ](x: Exp[DeliteCollection[A]], n: Exp[Int])
     (implicit ctx: SourceContext) = {
 
     if (isProfileArray(x)) (profile_apply(asProfileArray(x),n)).asInstanceOf[Exp[A]]
     else super.dc_apply(x,n)
   }
 
-  override def dc_update[A:Manifest](x: Exp[DeliteCollection[A]], n: Exp[Int], y: Exp[A])
+  override def dc_update[A:Typ](x: Exp[DeliteCollection[A]], n: Exp[Int], y: Exp[A])
     (implicit ctx: SourceContext) = {
 
     if (isProfileArray(x)) profile_update(asProfileArray(x),n,y.asInstanceOf[Exp[Double]])

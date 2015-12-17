@@ -9,11 +9,11 @@ trait OptiQLMiscOps extends Base {  this : OptiQL =>
 
   def tic(deps: Rep[Any]*) = optiql_profile_start(deps)
   def toc(deps: Rep[Any]*) = optiql_profile_stop(deps)
-  def infix_printAsTable[T:Manifest](t: Rep[Table[T]], max_rows: Rep[Int] = unit(100)): Rep[Unit] = tablePrintAsTable(t, max_rows)
+  def infix_printAsTable[T:Typ](t: Rep[Table[T]], max_rows: Rep[Int] = unit(100)): Rep[Unit] = tablePrintAsTable(t, max_rows)
 
   def optiql_profile_start(deps: Seq[Rep[Any]]): Rep[Unit]
   def optiql_profile_stop(deps: Seq[Rep[Any]]): Rep[Unit]
-  def tablePrintAsTable[T:Manifest](t: Rep[Table[T]], max_rows: Rep[Int]): Rep[Unit]
+  def tablePrintAsTable[T:Typ](t: Rep[Table[T]], max_rows: Rep[Int]): Rep[Unit]
 
 }
 
@@ -25,9 +25,9 @@ trait OptiQLMiscOpsExp extends OptiQLMiscOps with EffectExp { this : OptiQLExp =
 
   def optiql_profile_start(deps: Seq[Rep[Any]]): Rep[Unit] = reflectEffect(OptiQLProfileStart(Seq(deps: _*)))
   def optiql_profile_stop(deps: Seq[Rep[Any]]): Rep[Unit] =  reflectEffect(OptiQLProfileStop(Seq(deps: _*)))
-  def tablePrintAsTable[T:Manifest](t: Exp[Table[T]], max_rows: Rep[Int]): Exp[Unit] = reflectEffect(TablePrintAsTable(t, max_rows)) //TODO: port pretty print function from plain Scala
+  def tablePrintAsTable[T:Typ](t: Exp[Table[T]], max_rows: Rep[Int]): Exp[Unit] = reflectEffect(TablePrintAsTable(t, max_rows)) //TODO: port pretty print function from plain Scala
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     case Reflect(OptiQLProfileStart(x), u, es) => reflectMirrored(Reflect(OptiQLProfileStart(f(x)), mapOver(f,u), f(es)))(mtype(manifest[A]), ctx)
     case Reflect(OptiQLProfileStop(x), u, es) => reflectMirrored(Reflect(OptiQLProfileStop(f(x)), mapOver(f,u), f(es)))(mtype(manifest[A]), ctx)
     case Reflect(TablePrintAsTable(x,m), u, es) => reflectMirrored(Reflect(TablePrintAsTable(f(x),f(m)), mapOver(f,u), f(es)))(mtype(manifest[A]), ctx)

@@ -11,11 +11,12 @@ trait DeliteAllOverridesExp extends DeliteIfThenElseExp /*with DeliteOpMap*/ wit
 
 trait DeliteScalaGenAllOverrides extends DeliteScalaGenVariables with DeliteScalaGenIfThenElse /*with DeliteScalaGenRange*/ with DeliteScalaGenWhile with ScalaGenDeliteStruct {
   val IR: DeliteAllOverridesExp
+  import IR._
     
   /**
    * Avoid remapping Nothing to generated.scala.Nothing
    */
-  override def remap[A](m: Manifest[A]): String = m.toString match {
+  override def remap[A](m: Typ[A]): String = m.toString match {
     case "Nothing" => "Nothing"
     case "Int" if Config.intSize == "long" => "Long"
     //case "Int" if Config.intSize == "short" => "Short"
@@ -28,7 +29,8 @@ trait DeliteScalaGenAllOverrides extends DeliteScalaGenVariables with DeliteScal
 }
 
 trait CLikeTypeOverrides extends CLikeCodegen {
-  override def remap[A](m: Manifest[A]): String = m.toString match {
+  import IR._
+  override def remap[A](m: Typ[A]): String = m.toString match {
     case "Int" if Config.intSize == "long" => "int64_t"
     //case "Int" if Config.intSize == "short" => "int16_t"
     case _ => super.remap(m)

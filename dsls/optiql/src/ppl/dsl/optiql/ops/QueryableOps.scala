@@ -9,93 +9,93 @@ import scala.reflect.{RefinedManifest, SourceContext}
 
 trait QueryableOps extends Base { this: OptiQL =>
   
-  implicit def repToQueryableOps[T:Manifest](r: Rep[Table[T]]) = new QOpsCls(r)
-  implicit def repGroupingToQueryableOps[K:Manifest, T:Manifest](g: Rep[Grouping[K, T]]) = new QOpsCls(queryable_grouping_toDatatable(g))
+  implicit def repToQueryableOps[T:Typ](r: Rep[Table[T]]) = new QOpsCls(r)
+  implicit def repGroupingToQueryableOps[K:Typ, T:Typ](g: Rep[Grouping[K, T]]) = new QOpsCls(queryable_grouping_toDatatable(g))
 
-  class QOpsCls[T:Manifest](s: Rep[Table[T]]) {
+  class QOpsCls[T:Typ](s: Rep[Table[T]]) {
     def Where(predicate: Rep[T] => Rep[Boolean]) = queryable_where(s, predicate)
-    def GroupBy[K:Manifest](keySelector: Rep[T] => Rep[K]) = queryable_groupby(s,keySelector)
-    def Select[R:Manifest](resultSelector: Rep[T] => Rep[R]) = queryable_select(s, resultSelector)
-    def SelectMany[R:Manifest](resultSelector: Rep[T] => Rep[Table[R]]) = queryable_selectMany(s, resultSelector)
-    def Sum[N:Numeric:Manifest](sumSelector: Rep[T] => Rep[N]) = queryable_sum(s, sumSelector)
-    def Average[N:Numeric:Manifest](avgSelector: Rep[T] => Rep[N]) = queryable_average(s, avgSelector)
+    def GroupBy[K:Typ](keySelector: Rep[T] => Rep[K]) = queryable_groupby(s,keySelector)
+    def Select[R:Typ](resultSelector: Rep[T] => Rep[R]) = queryable_select(s, resultSelector)
+    def SelectMany[R:Typ](resultSelector: Rep[T] => Rep[Table[R]]) = queryable_selectMany(s, resultSelector)
+    def Sum[N:Numeric:Typ](sumSelector: Rep[T] => Rep[N]) = queryable_sum(s, sumSelector)
+    def Average[N:Numeric:Typ](avgSelector: Rep[T] => Rep[N]) = queryable_average(s, avgSelector)
     def Count() = queryable_count(s)
     def Count(predicate: Rep[T] => Rep[Boolean]) = queryable_count_where(s, predicate)
     def Distinct() = queryable_distinct(s, (k:Rep[T]) => k)
-    def Distinct[K:Manifest](keySelector: Rep[T] => Rep[K]) = queryable_distinct(s, keySelector)
-    def OrderBy[K:Ordering:Manifest](keySelector: Rep[T] => Rep[K]) = queryable_orderby(s, keySelector)
-    def OrderByDescending[K:Ordering:Manifest](keySelector: Rep[T] => Rep[K]) = queryable_orderbydescending(s, keySelector)
-    def ThenBy[K:Ordering:Manifest](keySelector: Rep[T] => Rep[K]) = queryable_thenby(s, keySelector)
-    def ThenByDescending[K:Ordering:Manifest](keySelector: Rep[T] => Rep[K]) = queryable_thenbydescending(s, keySelector) 
-    def Max[N:Ordering:Manifest](maxSelector: Rep[T] => Rep[N]) = queryable_max(s, maxSelector)
-    def Min[N:Ordering:Manifest](minSelector: Rep[T] => Rep[N]) = queryable_min(s, minSelector)
+    def Distinct[K:Typ](keySelector: Rep[T] => Rep[K]) = queryable_distinct(s, keySelector)
+    def OrderBy[K:Ordering:Typ](keySelector: Rep[T] => Rep[K]) = queryable_orderby(s, keySelector)
+    def OrderByDescending[K:Ordering:Typ](keySelector: Rep[T] => Rep[K]) = queryable_orderbydescending(s, keySelector)
+    def ThenBy[K:Ordering:Typ](keySelector: Rep[T] => Rep[K]) = queryable_thenby(s, keySelector)
+    def ThenByDescending[K:Ordering:Typ](keySelector: Rep[T] => Rep[K]) = queryable_thenbydescending(s, keySelector)
+    def Max[N:Ordering:Typ](maxSelector: Rep[T] => Rep[N]) = queryable_max(s, maxSelector)
+    def Min[N:Ordering:Typ](minSelector: Rep[T] => Rep[N]) = queryable_min(s, minSelector)
     def First() = queryable_first(s)
     def Last() = queryable_last(s)
-    def Join[T2:Manifest](second: Rep[Table[T2]]) = new JoinableOps(s, second)
+    def Join[T2:Typ](second: Rep[Table[T2]]) = new JoinableOps(s, second)
   }
 
-  class JoinableOps[T1:Manifest, T2:Manifest](first: Rep[Table[T1]], second: Rep[Table[T2]]) {
+  class JoinableOps[T1:Typ, T2:Typ](first: Rep[Table[T1]], second: Rep[Table[T2]]) {
     def Where(predicate: Rep[T2] => Rep[Boolean]) = new JoinableOps(first, second.Where(predicate))
-    def WhereEq[K:Manifest](firstKeySelector: Rep[T1] => Rep[K], secondKeySelector: Rep[T2] => Rep[K]) = new Joinable2(first, firstKeySelector, second, secondKeySelector)
+    def WhereEq[K:Typ](firstKeySelector: Rep[T1] => Rep[K], secondKeySelector: Rep[T2] => Rep[K]) = new Joinable2(first, firstKeySelector, second, secondKeySelector)
   }
 
-  class Joinable2[T1:Manifest, T2:Manifest, K:Manifest](first: Rep[Table[T1]], firstKeySelector: Rep[T1] => Rep[K], second: Rep[Table[T2]], secondKeySelector: Rep[T2] => Rep[K]) {
-    def Select[R:Manifest](resultSelector: (Rep[T1], Rep[T2]) => Rep[R]) = queryable_join2(first, firstKeySelector, second, secondKeySelector, resultSelector)
+  class Joinable2[T1:Typ, T2:Typ, K:Typ](first: Rep[Table[T1]], firstKeySelector: Rep[T1] => Rep[K], second: Rep[Table[T2]], secondKeySelector: Rep[T2] => Rep[K]) {
+    def Select[R:Typ](resultSelector: (Rep[T1], Rep[T2]) => Rep[R]) = queryable_join2(first, firstKeySelector, second, secondKeySelector, resultSelector)
   }
   
   //Grouping
-  def infix_key[K:Manifest, T:Manifest](g: Rep[Grouping[K, T]]) = queryable_grouping_key(g) 
+  def infix_key[K:Typ, T:Typ](g: Rep[Grouping[K, T]]) = queryable_grouping_key(g)
 
-  def queryable_where[T:Manifest](s: Rep[Table[T]], predicate: Rep[T] => Rep[Boolean]): Rep[Table[T]]
-  def queryable_groupby[T:Manifest, K:Manifest](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[Grouping[K, T]]]
-  def queryable_select[T:Manifest, R:Manifest](s: Rep[Table[T]], resultSelector: Rep[T] => Rep[R]): Rep[Table[R]]
-  def queryable_selectMany[T:Manifest, R:Manifest](s: Rep[Table[T]], resultSelector: Rep[T] => Rep[Table[R]]): Rep[Table[R]]
-  def queryable_sum[T:Manifest, N:Numeric:Manifest](s: Rep[Table[T]], sumSelector: Rep[T] => Rep[N]): Rep[N]
-  def queryable_average[T:Manifest, N:Numeric:Manifest](s: Rep[Table[T]], avgSelector: Rep[T] => Rep[N]): Rep[N]
-  def queryable_count[T:Manifest](s: Rep[Table[T]]): Rep[Int]  
-  def queryable_count_where[T:Manifest](s: Rep[Table[T]], predicate: Rep[T] => Rep[Boolean]): Rep[Int]
-  def queryable_distinct[T:Manifest, K:Manifest](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
-  def queryable_max[T:Manifest, N:Ordering:Manifest](s: Rep[Table[T]], maxSelector: Rep[T] => Rep[N]): Rep[N]
-  def queryable_min[T:Manifest, N:Ordering:Manifest](s: Rep[Table[T]], minSelector: Rep[T] => Rep[N]): Rep[N]
-  def queryable_first[T:Manifest](s: Rep[Table[T]]): Rep[T]
-  def queryable_last[T:Manifest](s: Rep[Table[T]]): Rep[T]
-  def queryable_orderby[T:Manifest, K:Ordering:Manifest](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
-  def queryable_orderbydescending[T:Manifest, K:Ordering:Manifest](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
-  def queryable_thenby[T:Manifest, K:Ordering:Manifest](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
-  def queryable_thenbydescending[T:Manifest, K:Ordering:Manifest](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
+  def queryable_where[T:Typ](s: Rep[Table[T]], predicate: Rep[T] => Rep[Boolean]): Rep[Table[T]]
+  def queryable_groupby[T:Typ, K:Typ](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[Grouping[K, T]]]
+  def queryable_select[T:Typ, R:Typ](s: Rep[Table[T]], resultSelector: Rep[T] => Rep[R]): Rep[Table[R]]
+  def queryable_selectMany[T:Typ, R:Typ](s: Rep[Table[T]], resultSelector: Rep[T] => Rep[Table[R]]): Rep[Table[R]]
+  def queryable_sum[T:Typ, N:Numeric:Typ](s: Rep[Table[T]], sumSelector: Rep[T] => Rep[N]): Rep[N]
+  def queryable_average[T:Typ, N:Numeric:Typ](s: Rep[Table[T]], avgSelector: Rep[T] => Rep[N]): Rep[N]
+  def queryable_count[T:Typ](s: Rep[Table[T]]): Rep[Int]
+  def queryable_count_where[T:Typ](s: Rep[Table[T]], predicate: Rep[T] => Rep[Boolean]): Rep[Int]
+  def queryable_distinct[T:Typ, K:Typ](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
+  def queryable_max[T:Typ, N:Ordering:Typ](s: Rep[Table[T]], maxSelector: Rep[T] => Rep[N]): Rep[N]
+  def queryable_min[T:Typ, N:Ordering:Typ](s: Rep[Table[T]], minSelector: Rep[T] => Rep[N]): Rep[N]
+  def queryable_first[T:Typ](s: Rep[Table[T]]): Rep[T]
+  def queryable_last[T:Typ](s: Rep[Table[T]]): Rep[T]
+  def queryable_orderby[T:Typ, K:Ordering:Typ](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
+  def queryable_orderbydescending[T:Typ, K:Ordering:Typ](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
+  def queryable_thenby[T:Typ, K:Ordering:Typ](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
+  def queryable_thenbydescending[T:Typ, K:Ordering:Typ](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]): Rep[Table[T]]
   
-  def queryable_grouping_toDatatable[K:Manifest, T:Manifest](g: Rep[Grouping[K, T]]): Rep[Table[T]]
-  def queryable_grouping_key[K:Manifest, T:Manifest](g: Rep[Grouping[K, T]]): Rep[K]
+  def queryable_grouping_toDatatable[K:Typ, T:Typ](g: Rep[Grouping[K, T]]): Rep[Table[T]]
+  def queryable_grouping_key[K:Typ, T:Typ](g: Rep[Grouping[K, T]]): Rep[K]
   
-  def queryable_join2[T1:Manifest, T2:Manifest, K2:Manifest, R:Manifest](first: Rep[Table[T1]], firstKeySelector: Rep[T1] => Rep[K2], 
+  def queryable_join2[T1:Typ, T2:Typ, K2:Typ, R:Typ](first: Rep[Table[T1]], firstKeySelector: Rep[T1] => Rep[K2],
     second: Rep[Table[T2]], secondKeySelector: Rep[T2] => Rep[K2], resultSelector: (Rep[T1], Rep[T2]) => Rep[R]):Rep[Table[R]]
   
 }
 
 trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with DeliteStructsExp { this: OptiQLExp =>
   
-  case class QueryableWhere[T:Manifest](in: Exp[Table[T]], cond: Exp[T] => Exp[Boolean]) extends DeliteOpFilter[T, T, Table[T]] {
+  case class QueryableWhere[T:Typ](in: Exp[Table[T]], cond: Exp[T] => Exp[Boolean]) extends DeliteOpFilter[T, T, Table[T]] {
     override def alloc(len: Exp[Int]) = Table(len)
     val size = copyTransformedOrElse(_.size)(in.size)
     def func = e => e
     val mT = manifest[T]
   }
      
-  case class QueryableSelect[T:Manifest, R:Manifest](in: Exp[Table[T]], func: Exp[T] => Exp[R]) extends DeliteOpMap[T, R, Table[R]] {
+  case class QueryableSelect[T:Typ, R:Typ](in: Exp[Table[T]], func: Exp[T] => Exp[R]) extends DeliteOpMap[T, R, Table[R]] {
     override def alloc(len: Exp[Int]) = Table(len)
     val size = copyTransformedOrElse(_.size)(in.size)
     val mT = manifest[T]
     val mR = manifest[R]
   }
 
-  case class QueryableSelectMany[T:Manifest, R:Manifest](in: Exp[Table[T]], func: Exp[T] => Exp[Table[R]]) extends DeliteOpFlatMap[T, R, Table[R]] {
+  case class QueryableSelectMany[T:Typ, R:Typ](in: Exp[Table[T]], func: Exp[T] => Exp[Table[R]]) extends DeliteOpFlatMap[T, R, Table[R]] {
     override def alloc(len: Exp[Int]) = Table(len)
     val size = copyTransformedOrElse(_.size)(in.size)
     val mT = manifest[T]
     val mR = manifest[R]
   }
 
-  case class QueryableSum[T:Manifest, N:Numeric:Manifest](in: Exp[Table[T]], map: Exp[T] => Exp[N]) extends DeliteOpMapReduce[T, N] {
+  case class QueryableSum[T:Typ, N:Numeric:Typ](in: Exp[Table[T]], map: Exp[T] => Exp[N]) extends DeliteOpMapReduce[T, N] {
     val size = copyTransformedOrElse(_.size)(in.size)
     def zero = zeroType[N] //TODO: member of Numeric
     def reduce = _ + _
@@ -105,7 +105,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     val mT = manifest[T]
   }
 
-  case class QueryableMax[T:Manifest, N:Ordering:Manifest](in: Exp[Table[T]], map: Exp[T] => Exp[N]) extends DeliteOpMapReduce[T, N] {
+  case class QueryableMax[T:Typ, N:Ordering:Typ](in: Exp[Table[T]], map: Exp[T] => Exp[N]) extends DeliteOpMapReduce[T, N] {
     val size = copyTransformedOrElse(_.size)(in.size)
     def zero = minValue[N]
     def reduce = (a,b) => a max b
@@ -115,7 +115,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     val mT = manifest[T]
   }
 
-  case class QueryableMin[T:Manifest, N:Ordering:Manifest](in: Exp[Table[T]], map: Exp[T] => Exp[N]) extends DeliteOpMapReduce[T, N] {
+  case class QueryableMin[T:Typ, N:Ordering:Typ](in: Exp[Table[T]], map: Exp[T] => Exp[N]) extends DeliteOpMapReduce[T, N] {
     val size = copyTransformedOrElse(_.size)(in.size)
     def zero = maxValue[N]
     def reduce = (a,b) => a min b
@@ -126,7 +126,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
   }
 
   //TODO: should be DeliteOpComposite rather than DeliteOpSingleTask
-  case class QueryableAverage[T:Manifest, N:Numeric:Manifest](in: Exp[Table[T]], map: Exp[T] => Exp[N])
+  case class QueryableAverage[T:Typ, N:Numeric:Typ](in: Exp[Table[T]], map: Exp[T] => Exp[N])
     extends DeliteOpSingleTask[N](reifyEffectsHere(queryable_average_impl(in,map))) {
     val mT = manifest[T]
     val mN = manifest[N]
@@ -134,19 +134,19 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
   }
 
   //TODO: should be DeliteOpComposite rather than DeliteOpSingleTask
-  case class QueryableSort[T:Manifest](in: Exp[Table[T]], compare: (Exp[T],Exp[T]) => Exp[Int]) 
+  case class QueryableSort[T:Typ](in: Exp[Table[T]], compare: (Exp[T],Exp[T]) => Exp[Int])
     extends DeliteOpSingleTask[Table[T]](reifyEffectsHere(queryable_sort_impl(in,compare))) {
     val mT = manifest[T]
   }
 
   //TODO: should be DeliteOpComposite rather than DeliteOpSingleTask
-  case class QueryableGroupBy[T:Manifest, K:Manifest](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K]) 
+  case class QueryableGroupBy[T:Typ, K:Typ](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K])
     extends DeliteOpSingleTask[Table[Grouping[K,T]]](reifyEffectsHere(queryable_groupby_impl(in,keyFunc))) {
     val mT = manifest[T]
     val mK = manifest[K]
   }
 
-  case class QueryableGroupValues[T:Manifest, K:Manifest](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K]) extends DeliteOpGroupBy[K,T,Table[T],DeliteArray[Table[T]]] {
+  case class QueryableGroupValues[T:Typ, K:Typ](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K]) extends DeliteOpGroupBy[K,T,Table[T],DeliteArray[Table[T]]] {
     def alloc(len: Exp[Int]) = DeliteArray[Table[T]](len)
     def allocI(len: Exp[Int]) = Table[T](len)
     val size = copyTransformedOrElse(_.size)(in.size)
@@ -155,7 +155,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     val mK = manifest[K]
   }
 
-  case class QueryableKeysDistinct[T:Manifest, K:Manifest](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K]) extends DeliteOpMappedGroupByReduce[T, K, K, DeliteArray[K]] {
+  case class QueryableKeysDistinct[T:Typ, K:Typ](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K]) extends DeliteOpMappedGroupByReduce[T, K, K, DeliteArray[K]] {
     def alloc(len: Exp[Int]) = DeliteArray[K](len)
     val size = copyTransformedOrElse(_.size)(in.size)
     def zero = zeroType[K]
@@ -163,7 +163,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     def reduceFunc = (a,b) => a
   }
 
-  case class QueryableDistinct[T:Manifest, K:Manifest](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K]) extends DeliteOpGroupByReduce[K, T, Table[T]] {
+  case class QueryableDistinct[T:Typ, K:Typ](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K]) extends DeliteOpGroupByReduce[K, T, Table[T]] {
     def alloc(len: Exp[Int]) = Table[T](len)
     val size = copyTransformedOrElse(_.size)(in.size)
     def zero = zeroType[T]
@@ -174,7 +174,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
   }
 
 
-  case class QueryableCountWhere[T:Manifest](in: Exp[Table[T]], cond: Exp[T] => Exp[Boolean]) extends DeliteOpFilterReduce[T,Int] {
+  case class QueryableCountWhere[T:Typ](in: Exp[Table[T]], cond: Exp[T] => Exp[Boolean]) extends DeliteOpFilterReduce[T,Int] {
     val size = copyTransformedOrElse(_.size)(in.size)
     def zero = unit(0)
     def func = a => unit(1)       
@@ -183,17 +183,17 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     val mT = manifest[T]
   }
   
-  case class QueryableCount[T:Manifest](s: Exp[Table[T]]) extends DeliteOpSingleWithManifest[T,Int](reifyEffectsHere(s.size))
-  case class QueryableFirst[T:Manifest](s: Exp[Table[T]]) extends DeliteOpSingleTask[T](reifyEffectsHere(s(unit(0))))
-  case class QueryableLast[T:Manifest](s: Exp[Table[T]]) extends DeliteOpSingleTask[T](reifyEffectsHere(s(s.size-1)))
+  case class QueryableCount[T:Typ](s: Exp[Table[T]]) extends DeliteOpSingleWithManifest[T,Int](reifyEffectsHere(s.size))
+  case class QueryableFirst[T:Typ](s: Exp[Table[T]]) extends DeliteOpSingleTask[T](reifyEffectsHere(s(unit(0))))
+  case class QueryableLast[T:Typ](s: Exp[Table[T]]) extends DeliteOpSingleTask[T](reifyEffectsHere(s(s.size-1)))
 
-  protected def zeroType[T:Manifest]: Exp[T] = manifest[T] match { //need a more robust solution, e.g. type class
+  protected def zeroType[T:Typ]: Exp[T] = manifest[T] match { //need a more robust solution, e.g. type class
     case StructType(tag,elems) => struct[T](tag, elems.map(e => (e._1, zeroType(e._2))))
     case v if v <:< manifest[AnyVal] => unit(0).AsInstanceOf[T]
     case _ => unit(null).AsInstanceOf[T]
   }
 
-  protected def minValue[T:Manifest]: Exp[T] = (manifest[T] match {
+  protected def minValue[T:Typ]: Exp[T] = (manifest[T] match {
     case v if v == manifest[Int] => unit(scala.Int.MinValue)
     case v if v == manifest[Long] => unit(scala.Long.MinValue)
     case v if v == manifest[Double] => unit(scala.Double.MinValue)
@@ -202,7 +202,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     case _ => unit(null).AsInstanceOf[T] //shouldn't be used for reference types
   }).asInstanceOf[Exp[T]]
 
-  protected def maxValue[T:Manifest]: Exp[T] = (manifest[T] match {
+  protected def maxValue[T:Typ]: Exp[T] = (manifest[T] match {
     case v if v == manifest[Int] => unit(scala.Int.MaxValue)
     case v if v == manifest[Long] => unit(scala.Long.MaxValue)
     case v if v == manifest[Double] => unit(scala.Double.MaxValue)
@@ -211,9 +211,9 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     case _ => unit(null).AsInstanceOf[T] //shouldn't be used for reference types
   }).asInstanceOf[Exp[T]]
 
-  def queryable_select[T:Manifest, R:Manifest](s: Exp[Table[T]], resultSelector: Exp[T] => Exp[R]) = QueryableSelect(s, resultSelector)
+  def queryable_select[T:Typ, R:Typ](s: Exp[Table[T]], resultSelector: Exp[T] => Exp[R]) = QueryableSelect(s, resultSelector)
 
-  def queryable_selectMany[T:Manifest, R:Manifest](s: Exp[Table[T]], resultSelector: Exp[T] => Exp[Table[R]]) = {
+  def queryable_selectMany[T:Typ, R:Typ](s: Exp[Table[T]], resultSelector: Exp[T] => Exp[Table[R]]) = {
     //QueryableSelectMany(s, resultSelector)
     queryable_flatmap_internal(s, (e: Exp[T]) => {
       val t = resultSelector(e)
@@ -221,27 +221,27 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     })
   }
 
-  def queryable_where[T:Manifest](s: Exp[Table[T]], predicate: Exp[T] => Exp[Boolean]) = QueryableWhere(s, predicate)
+  def queryable_where[T:Typ](s: Exp[Table[T]], predicate: Exp[T] => Exp[Boolean]) = QueryableWhere(s, predicate)
 
-  def queryable_groupby[T:Manifest, K:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = QueryableGroupBy(s, keySelector)
+  def queryable_groupby[T:Typ, K:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = QueryableGroupBy(s, keySelector)
 
-  def queryable_groupby_impl[T:Manifest, K:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]): Exp[Table[Grouping[K,T]]] = {
+  def queryable_groupby_impl[T:Typ, K:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]): Exp[Table[Grouping[K,T]]] = {
     val map = queryable_groupby_internal(s, keySelector)
     val array = map.keys.zip(map.values){ (k,v) => grouping_apply(k,Table(darray_buffer_unsafe_result(v), v.length)) }
     Table(array, array.length)
   }
 
   //TODO: do we really want different signatures for user groupBy and internal (join) groupBy? i.e., is Map exposed to user?
-  def queryable_groupby_internal[T:Manifest, K:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]): Exp[DeliteMap[K,DeliteArrayBuffer[T]]] = {
+  def queryable_groupby_internal[T:Typ, K:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]): Exp[DeliteMap[K,DeliteArrayBuffer[T]]] = {
     DeliteArrayBuffer(tableRawData(s), tableSize(s)).groupBy(keySelector)
   }
 
-  def queryable_flatmap_internal[T:Manifest,R:Manifest](s: Exp[Table[T]], func: Exp[T] => Exp[DeliteArrayBuffer[R]]): Exp[Table[R]] = {
+  def queryable_flatmap_internal[T:Typ,R:Typ](s: Exp[Table[T]], func: Exp[T] => Exp[DeliteArrayBuffer[R]]): Exp[Table[R]] = {
     val buf = DeliteArrayBuffer(tableRawData(s), tableSize(s)).flatMap(func)
     Table(darray_buffer_unsafe_result(buf), buf.length)
   }
 
-  def queryable_join2[T1:Manifest, T2:Manifest, K:Manifest, R:Manifest](first: Exp[Table[T1]], firstKeySelector: Exp[T1] => Exp[K], 
+  def queryable_join2[T1:Typ, T2:Typ, K:Typ, R:Typ](first: Exp[Table[T1]], firstKeySelector: Exp[T1] => Exp[K],
     second: Exp[Table[T2]], secondKeySelector: Exp[T2] => Exp[K], resultSelector: (Exp[T1], Exp[T2]) => Exp[R]): Exp[Table[R]] = {
 
     //TODO: we want to hash the smaller collection, but size may be unknown
@@ -260,41 +260,41 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
   }
   
 
-  def queryable_sum[T:Manifest, N:Numeric:Manifest](s: Exp[Table[T]], sumSelector: Exp[T] => Exp[N]) = QueryableSum(s, sumSelector)
+  def queryable_sum[T:Typ, N:Numeric:Typ](s: Exp[Table[T]], sumSelector: Exp[T] => Exp[N]) = QueryableSum(s, sumSelector)
   
-  def queryable_max[T:Manifest, N:Ordering:Manifest](s: Exp[Table[T]], maxSelector: Exp[T] => Exp[N]) = QueryableMax(s, maxSelector)
+  def queryable_max[T:Typ, N:Ordering:Typ](s: Exp[Table[T]], maxSelector: Exp[T] => Exp[N]) = QueryableMax(s, maxSelector)
 
-  def queryable_min[T:Manifest, N:Ordering:Manifest](s: Exp[Table[T]], minSelector: Exp[T] => Exp[N]) = QueryableMin(s, minSelector)
+  def queryable_min[T:Typ, N:Ordering:Typ](s: Exp[Table[T]], minSelector: Exp[T] => Exp[N]) = QueryableMin(s, minSelector)
 
-  def queryable_average[T:Manifest, N:Numeric:Manifest](s: Exp[Table[T]], avgSelector: Exp[T] => Exp[N]) = QueryableAverage(s, avgSelector)
+  def queryable_average[T:Typ, N:Numeric:Typ](s: Exp[Table[T]], avgSelector: Exp[T] => Exp[N]) = QueryableAverage(s, avgSelector)
     
-  def queryable_average_impl[T:Manifest, N:Numeric:Manifest](s: Exp[Table[T]], avgSelector: Exp[T] => Exp[N]): Exp[N] = {
+  def queryable_average_impl[T:Typ, N:Numeric:Typ](s: Exp[Table[T]], avgSelector: Exp[T] => Exp[N]): Exp[N] = {
     s.Sum(avgSelector)/s.Count.asInstanceOf[Exp[N]] //TODO: this only works for primitive types
   }
     
-  def queryable_count[T:Manifest](s: Exp[Table[T]]) = reflectPure(QueryableCount(s))
+  def queryable_count[T:Typ](s: Exp[Table[T]]) = reflectPure(QueryableCount(s))
 
-  def queryable_count_where[T:Manifest](s: Exp[Table[T]], predicate: Exp[T] => Exp[Boolean]) = reflectPure(QueryableCountWhere(s, predicate))
+  def queryable_count_where[T:Typ](s: Exp[Table[T]], predicate: Exp[T] => Exp[Boolean]) = reflectPure(QueryableCountWhere(s, predicate))
 
-  def queryable_distinct[T:Manifest, K:Manifest](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]) = reflectPure(QueryableDistinct(s, keySelector))
+  def queryable_distinct[T:Typ, K:Typ](s: Rep[Table[T]], keySelector: Rep[T] => Rep[K]) = reflectPure(QueryableDistinct(s, keySelector))
 
-  def queryable_first[T:Manifest](s: Exp[Table[T]]) = reflectPure(QueryableFirst(s))
+  def queryable_first[T:Typ](s: Exp[Table[T]]) = reflectPure(QueryableFirst(s))
 
-  def queryable_last[T:Manifest](s: Exp[Table[T]]) = reflectPure(QueryableLast(s))
+  def queryable_last[T:Typ](s: Exp[Table[T]]) = reflectPure(QueryableLast(s))
 
-  def compareAsc[T:Manifest, K:Ordering:Manifest](a: Exp[T], b: Exp[T], keySelector: Exp[T] => Exp[K]): Exp[Int] = {
+  def compareAsc[T:Typ, K:Ordering:Typ](a: Exp[T], b: Exp[T], keySelector: Exp[T] => Exp[K]): Exp[Int] = {
     keySelector(a) compare keySelector(b)
   }
 
-  def compareDsc[T:Manifest, K:Ordering:Manifest](a: Exp[T], b: Exp[T], keySelector: Exp[T] => Exp[K]): Exp[Int] = {
+  def compareDsc[T:Typ, K:Ordering:Typ](a: Exp[T], b: Exp[T], keySelector: Exp[T] => Exp[K]): Exp[Int] = {
     keySelector(b) compare keySelector(a)
   }
   
-  def queryable_orderby[T:Manifest, K:Ordering:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = QueryableSort(s, (a:Exp[T], b:Exp[T]) => compareAsc(a,b,keySelector))
+  def queryable_orderby[T:Typ, K:Ordering:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = QueryableSort(s, (a:Exp[T], b:Exp[T]) => compareAsc(a,b,keySelector))
 
-  def queryable_orderbydescending[T:Manifest, K:Ordering:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = QueryableSort(s, (a:Exp[T], b:Exp[T]) => compareDsc(a,b,keySelector))
+  def queryable_orderbydescending[T:Typ, K:Ordering:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = QueryableSort(s, (a:Exp[T], b:Exp[T]) => compareDsc(a,b,keySelector))
 
-  def queryable_thenby[T:Manifest, K:Ordering:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = s match {
+  def queryable_thenby[T:Typ, K:Ordering:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = s match {
     case Def(QueryableSort(orig, sel)) =>
       val compoundSel = (a:Exp[T], b:Exp[T]) => {
         val prev = sel(a,b)
@@ -306,7 +306,7 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     case _ => throw new IllegalArgumentException("ERROR: ThenBy must be preceded by OrderBy or OrderByDescending")
   }
 
-  def queryable_thenbydescending[T:Manifest, K:Ordering:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = s match {
+  def queryable_thenbydescending[T:Typ, K:Ordering:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = s match {
     case Def(QueryableSort(orig, sel)) =>
       val compoundSel = (a:Exp[T], b:Exp[T]) => {
         val prev = sel(a,b)
@@ -318,24 +318,24 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
     case _ => throw new IllegalArgumentException("ERROR: ThenByDescending must be preceded by OrderBy or OrderByDescending")
   }
 
-  def queryable_sort_impl[T:Manifest, K:Manifest](s: Exp[Table[T]], comparator: (Exp[T],Exp[T]) => Exp[Int]): Exp[Table[T]] = {
+  def queryable_sort_impl[T:Typ, K:Typ](s: Exp[Table[T]], comparator: (Exp[T],Exp[T]) => Exp[Int]): Exp[Table[T]] = {
     val indices = DeliteArray.sortIndices(s.size)((i:Exp[Int],j:Exp[Int]) => comparator(s(i), s(j)))
     val sorted = DeliteArray.fromFunction(s.size)(i => s(indices(i)))
     Table(sorted, s.size)
   }
   
-  def grouping_apply[K:Manifest, T:Manifest](k: Exp[K], v: Exp[Table[T]]): Exp[Grouping[K,T]] =
+  def grouping_apply[K:Typ, T:Typ](k: Exp[K], v: Exp[Table[T]]): Exp[Grouping[K,T]] =
     struct[Grouping[K,T]](ClassTag[Grouping[K,T]]("Grouping"), "key"->k, "values"->v)
   
-  def queryable_grouping_key[K:Manifest, T:Manifest](g: Exp[Grouping[K, T]]): Exp[K] = field[K](g, "key")
-  def queryable_grouping_toDatatable[K:Manifest, T:Manifest](g: Exp[Grouping[K, T]]): Exp[Table[T]] = field[Table[T]](g, "values")
+  def queryable_grouping_key[K:Typ, T:Typ](g: Exp[Grouping[K, T]]): Exp[K] = field[K](g, "key")
+  def queryable_grouping_toDatatable[K:Typ, T:Typ](g: Exp[Grouping[K, T]]): Exp[Table[T]] = field[Table[T]](g, "values")
 
-  override def unapplyStructType[T:Manifest]: Option[(StructTag[T], List[(String,Manifest[_])])] = manifest[T] match {
+  override def unapplyStructType[T:Typ]: Option[(StructTag[T], List[(String,Typ[_])])] = manifest[T] match {
     case t if t.erasure == classOf[Grouping[_,_]] => Some((classTag(t), List("key" -> t.typeArguments(0), "values" -> makeManifest(classOf[Table[_]], List(t.typeArguments(1))))))
     case _ => super.unapplyStructType
   }
   
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     case e@QueryableSelect(in,g) => reflectPure(new { override val original = Some(f,e) } with QueryableSelect(f(in),f(g))(mtype(e.mT),mtype(e.mR)))(mtype(manifest[A]),implicitly[SourceContext])      
     case e@QueryableSelectMany(in,g) => reflectPure(new { override val original = Some(f,e) } with QueryableSelectMany(f(in),f(g))(mtype(e.mT),mtype(e.mR)))(mtype(manifest[A]),implicitly[SourceContext])
     case e@QueryableWhere(in,c) => reflectPure(new { override val original = Some(f,e) } with QueryableWhere(f(in),f(c))(mtype(e.mT)))(mtype(manifest[A]),implicitly[SourceContext])      
@@ -357,19 +357,19 @@ trait QueryableOpsExp extends QueryableOps with EffectExp with BaseFatExp with D
 
 trait QueryableOpsExpOpt extends QueryableOpsExp { this: OptiQLExp =>
 
-  case class QueryableSelectWhere[T:Manifest, R:Manifest](in: Exp[Table[T]], func: Exp[T] => Exp[R], cond: Exp[T] => Exp[Boolean]) extends DeliteOpFilter[T, R, Table[R]] {
+  case class QueryableSelectWhere[T:Typ, R:Typ](in: Exp[Table[T]], func: Exp[T] => Exp[R], cond: Exp[T] => Exp[Boolean]) extends DeliteOpFilter[T, R, Table[R]] {
     override def alloc(len: Exp[Int]) = Table(len)
     val size = copyTransformedOrElse(_.size)(in.size)
     val mT = manifest[T]
     val mR = manifest[R]
   }
 
-  case class QueryableGroupByWhere[T:Manifest, K:Manifest](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K], cond: Exp[T] => Exp[Boolean]) extends Def[Table[Grouping[K,T]]] {
+  case class QueryableGroupByWhere[T:Typ, K:Typ](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K], cond: Exp[T] => Exp[Boolean]) extends Def[Table[Grouping[K,T]]] {
     val mT = manifest[T]
     val mK = manifest[K]
   }
 
-  case class QueryableHashReduce[T:Manifest, K:Manifest, R:Manifest](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K], valFunc: Exp[T] => Exp[R], reduceFunc: (Exp[R],Exp[R]) => Exp[R], cond: Exp[T] => Exp[Boolean]) 
+  case class QueryableHashReduce[T:Typ, K:Typ, R:Typ](in: Exp[Table[T]], keyFunc: Exp[T] => Exp[K], valFunc: Exp[T] => Exp[R], reduceFunc: (Exp[R],Exp[R]) => Exp[R], cond: Exp[T] => Exp[Boolean])
     extends DeliteOpFilteredGroupByReduce[T, K, R, Table[R]] {
 
     def alloc(i: Exp[Int]) = Table[R](i)
@@ -381,20 +381,20 @@ trait QueryableOpsExpOpt extends QueryableOpsExp { this: OptiQLExp =>
     val mR = manifest[R]
   }
 
-  case class QueryableDivide[T:Manifest](inA: Exp[Table[T]], inB: Exp[Table[Int]], func: (Exp[T],Exp[Int]) => Exp[T]) extends DeliteOpZipWith[T,Int,T,Table[T]] {
+  case class QueryableDivide[T:Typ](inA: Exp[Table[T]], inB: Exp[Table[Int]], func: (Exp[T],Exp[Int]) => Exp[T]) extends DeliteOpZipWith[T,Int,T,Table[T]] {
     override def alloc(len: Exp[Int]) = Table(len)
     val size = copyTransformedOrElse(_.size)(inA.size)
     val mT = manifest[T]
   }
 
   //Where-GroupBy fusion
-  override def queryable_groupby[T:Manifest, K:Manifest](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = s match {
+  override def queryable_groupby[T:Typ, K:Typ](s: Exp[Table[T]], keySelector: Exp[T] => Exp[K]) = s match {
     case Def(QueryableWhere(origS, predicate)) => //TODO: this special-cases filter fusion (only for groupBy); LMS fusion should take care of it generically for us
       QueryableGroupByWhere(origS, keySelector, predicate)
     case _ => super.queryable_groupby(s, keySelector)
   }
 
-  private def hashReduce[A:Manifest,K:Manifest,T:Manifest,R:Manifest](resultSelector: Exp[T] => Exp[R], keySelector: Exp[A] => Exp[K]): Option[(Exp[A]=>Exp[R], (Exp[R],Exp[R])=>Exp[R], (Exp[R],Exp[Int])=>Exp[R])] = {
+  private def hashReduce[A:Typ,K:Typ,T:Typ,R:Typ](resultSelector: Exp[T] => Exp[R], keySelector: Exp[A] => Exp[K]): Option[(Exp[A]=>Exp[R], (Exp[R],Exp[R])=>Exp[R], (Exp[R],Exp[Int])=>Exp[R])] = {
     var failed = false
     val ctx = implicitly[SourceContext]
     def rewriteMap(value: Exp[Any]) = (value match {
@@ -441,7 +441,7 @@ trait QueryableOpsExpOpt extends QueryableOpsExp { this: OptiQLExp =>
     if (failed) None else Some(funcs)
   }
   
-  override def queryable_select[T:Manifest, R:Manifest](s: Exp[Table[T]], resultSelector: Exp[T] => Exp[R]): Exp[Table[R]] = s match {
+  override def queryable_select[T:Typ, R:Typ](s: Exp[Table[T]], resultSelector: Exp[T] => Exp[R]): Exp[Table[R]] = s match {
     case Def(QueryableWhere(origS, predicate)) => //Where-Select fusion
       QueryableSelectWhere(origS, resultSelector, predicate) 
     
@@ -467,7 +467,7 @@ trait QueryableOpsExpOpt extends QueryableOpsExp { this: OptiQLExp =>
   }
 
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     case e@QueryableSelectWhere(in,g,c) => reflectPure(new { override val original = Some(f,e) } with QueryableSelectWhere(f(in),f(g),f(c))(mtype(e.mT),mtype(e.mR)))(mtype(manifest[A]),implicitly[SourceContext])
     case e@QueryableHashReduce(in,key,m,r,c) => reflectPure(new { override val original = Some(f,e) } with QueryableHashReduce(f(in),f(key),f(m),f(r),f(c))(mtype(e.mT),mtype(e.mK),mtype(e.mR)))(mtype(manifest[A]),implicitly[SourceContext])
     case e@QueryableDivide(x,y,g) => reflectPure(new { override val original = Some(f,e) } with QueryableDivide(f(x),f(y),f(g))(mtype(e.mT)))(mtype(manifest[A]),implicitly[SourceContext])

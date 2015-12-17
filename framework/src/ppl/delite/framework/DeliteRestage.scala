@@ -21,15 +21,8 @@ import datastructures.DeliteArrayOpsExpOpt
 /**
  * For scope communication
  */
-object ScopeCommunication {
-  /* Path independent */  
-  abstract class DRef[+T]  
-  case class WrapSymAsDRef[T:Manifest](drefId: Int) extends DRef[T] 
-    
-  // global id
-  var curDrefId = 0  
-  def drefBox(id: Int) = "dref_" + id  
-}
+//object ScopeCommunication extends BaseExp {
+//}
 
 /**
  * Scope markers
@@ -52,23 +45,26 @@ object EndScopes {
   }
 }
   
-trait DeliteRestageOps extends Base {
-  import ScopeCommunication._
-  
+trait DeliteRestageOps extends Base with StringOps {
+
+
+  /* Path independent */
+  abstract class DRef[+T]
+
   // scope-facing placeholders for data exchange
   def lastScopeResult: Rep[Any]
   def returnScopeResult(n: Rep[Any]): Rep[Unit]
     
   object DRef {
-    def apply[T:Manifest](x: Rep[T]) = dref_new(x)
+    def apply[T:Typ](x: Rep[T]) = dref_new(x)
   }
-  implicit def dRefToRep[T:Manifest](ref: DRef[T]) = new DRefOpsCls(ref)  
-  class DRefOpsCls[T:Manifest](ref: DRef[T]) {
+  implicit def dRefToRep[T:Typ](ref: DRef[T]) = new DRefOpsCls(ref)
+  class DRefOpsCls[T:Typ](ref: DRef[T]) {
     def get = dref_get(ref)
   }
   
-  def dref_get[T:Manifest](x: DRef[T]): Rep[T]
-  def dref_new[T:Manifest](x: Rep[T]): DRef[T]
+  def dref_get[T:Typ](x: DRef[T]): Rep[T]
+  def dref_new[T:Typ](x: Rep[T]): DRef[T]
   
   // implicit def recToExtRec(x: Rep[Record]) // we actually have a (DeliteArray[Record],DeliteArray[Record])
   
@@ -84,38 +80,47 @@ trait DeliteRestageOps extends Base {
 
 trait DeliteRestageOpsExp extends DeliteRestageOps with EffectExp {
   this: DeliteArrayOpsExpOpt =>
-  
-  import ScopeCommunication._
-    
+
+  case class  WrapSymAsDRef[T:Typ](drefId: Int) extends DRef[T]
+
+  // global id
+  var curDrefId = 0
+  def drefBox(id: Int) = "dref_" + id
+  //  import ScopeCommunication._
+
+//  import ScopeCommunication._
+
   case class LastScopeResult() extends Def[Any]
-  def lastScopeResult = LastScopeResult()
-  
+  def lastScopeResult(implicit pos: SourceContext) = LastScopeResult()
+
   case class ReturnScopeResult(n: Rep[Any]) extends Def[Unit]
-  def returnScopeResult(n: Rep[Any]) = reflectEffect(ReturnScopeResult(n))
+  def returnScopeResult(n: Rep[Any])(implicit pos: SourceContext) = reflectEffect(ReturnScopeResult(n))(unitTyp, pos)
     
-  case class WrapDRefAsSym[T:Manifest](drefId: Int) extends Def[T]  
-  case class SetDRefOutput[T:Manifest](sym: Rep[T], drefId: Int) extends Def[Unit]
-  def dref_get[T:Manifest](ref: DRef[T]) = ref match {
-    case WrapSymAsDRef(id) => toAtom(WrapDRefAsSym(id))
+  case class WrapDRefAsSym[T:Typ](drefId: Int) extends Def[T]
+  case class SetDRefOutput[T:Typ](sym: Rep[T], drefId: Int) extends Def[Unit] {
+    val m = typ[T]
   }
-  def dref_new[T:Manifest](sym: Rep[T]) = {
+  def dref_get[T:Typ](ref: DRef[T])(implicit pos: SourceContext) = ref match {
+    case WrapSymAsDRef(id) => WrapDRefAsSym(id)(implicitly[Typ[T]])
+  }
+  def dref_new[T:Typ](sym: Rep[T])(implicit pos: SourceContext) = {
     // ideally you would want nothing in the restaged code - just a short-circuit via the box. the problem is that 
     // the generated code is scoped, so we don't have access to it unless we generate something to pass it along, too.    
     curDrefId += 1
-    reflectEffect(SetDRefOutput(sym, curDrefId)) 
-    WrapSymAsDRef(curDrefId) 
+    reflectEffect(SetDRefOutput(sym, curDrefId))(unitTyp, pos)
+    WrapSymAsDRef[T](curDrefId)
   }
   
   case class DeliteProfileStart(component: Exp[String], deps: List[Exp[Any]]) extends Def[Unit]
   case class DeliteProfileStop(component: Exp[String], deps: List[Exp[Any]]) extends Def[Unit]
 
-  def delite_profile_start(component: Exp[String], deps: Seq[Exp[Any]])(implicit ctx: SourceContext) = reflectEffect(DeliteProfileStart(component, deps.toList))
-  def delite_profile_stop(component: Exp[String], deps: Seq[Exp[Any]])(implicit ctx: SourceContext) = reflectEffect(DeliteProfileStop(component, deps.toList))
+  def delite_profile_start(component: Exp[String], deps: Seq[Exp[Any]])(implicit ctx: SourceContext) = reflectEffect(DeliteProfileStart(component, deps.toList))(unitTyp, ctx)
+  def delite_profile_stop(component: Exp[String], deps: Seq[Exp[Any]])(implicit ctx: SourceContext) = reflectEffect(DeliteProfileStop(component, deps.toList))(unitTyp, ctx)
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case LastScopeResult() => lastScopeResult
-    case WrapDRefAsSym(id) => toAtom(WrapDRefAsSym(id))
-    case Reflect(SetDRefOutput(s,id),u,es) => reflectMirrored(Reflect(SetDRefOutput(f(s),id), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+    case WrapDRefAsSym(id) => WrapDRefAsSym[A](id)
+    case Reflect(e@SetDRefOutput(s,id),u,es) => reflectMirrored(Reflect(SetDRefOutput(f(s),id)(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case Reflect(ReturnScopeResult(n),u,es) => reflectMirrored(Reflect(ReturnScopeResult(f(n)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)   
     case Reflect(DeliteProfileStart(c,deps), u, es) => reflectMirrored(Reflect(DeliteProfileStart(f(c),f(deps)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case Reflect(DeliteProfileStop(c,deps), u, es) => reflectMirrored(Reflect(DeliteProfileStop(f(c),f(deps)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
@@ -128,7 +133,7 @@ trait DeliteRestageRunner[R] extends DeliteApplication with DeliteRestageOpsExp 
   this: DeliteArrayOpsExpOpt =>
   
   import EndScopes._
-  import ScopeCommunication._
+//  import ScopeCommunication._
   
   def result: R = _mainResult.asInstanceOf[R] 
   def apply: R
@@ -146,7 +151,7 @@ trait DeliteRestageRunner[R] extends DeliteApplication with DeliteRestageOpsExp 
     // curScopeId += 1    
     generator.emitHeader(stream, append)
     generator.transformers = transformers        
-    generator.emitSource(liftedMain, "Application", stream)     
+    generator.emitSource(liftedMain, "Application", stream)(arrayTyp, unitTyp)
     stream.println("}")
     stream.close()
     

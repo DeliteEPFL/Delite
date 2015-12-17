@@ -21,12 +21,12 @@ trait TraversalAnalysis extends GenericFatCodegen with OverloadHack {
 
   def traverseNode(sym: Sym[Any], a: Def[Any]) = withStream(mockStream)(emitNode(sym, a))
   def traverseBlock(b: Block[Any])(implicit o: Overloaded1) = withStream(mockStream)(emitBlock(b))
-  def traverse[A:Manifest,B:Manifest](f: Exp[A] => Exp[B]) = { emitSource(f, className, mockStream); result }
+  def traverse[A:Typ,B:Typ](f: Exp[A] => Exp[B]) = { emitSource(f, className, mockStream); result }
   def emitValDef(sym: Sym[Any], rhs: String) {}
   def emitAssignment(lhs: String, rhs: String) {}
   def result: Option[Any] = _result
   
-  def emitSource[A : Manifest](args: List[Sym[_]], body: Block[A], className: String, stream: PrintWriter): List[(Sym[Any], Any)] = {
+  def emitSource[A : Typ](args: List[Sym[_]], body: Block[A], className: String, stream: PrintWriter): List[(Sym[Any], Any)] = {
     traverseBlock(body)
     Nil
   }

@@ -29,7 +29,7 @@ trait RuntimeServiceOpsExp extends RuntimeServiceOps with EffectExp {
   def runtime_query_numsockets()(implicit ctx: SourceContext) = reflectPure(RuntimeQueryNumSockets())
   def runtime_query_numslaves()(implicit ctx: SourceContext) = reflectPure(RuntimeQueryNumSlaves())
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case RuntimeQueryNumThreads() => runtime_query_numthreads()(pos)
     case RuntimeQueryNumSockets() => runtime_query_numsockets()(pos)
     case RuntimeQueryNumSlaves() => runtime_query_numslaves()(pos)

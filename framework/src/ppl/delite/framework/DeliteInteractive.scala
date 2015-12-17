@@ -15,11 +15,16 @@ import codegen.Target
 import ops.DeliteOpsExp
 
 trait DeliteInteractive extends Base {
-  implicit def staticArrayBuffer[A:Manifest](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]]
+  implicit def staticArrayBuffer[A:Typ](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]]
+  implicit def typArrayBuffer[A:Typ] : Typ[ArrayBuffer[A]]
 }
 
 trait DeliteInteractiveRunner[R] extends DeliteApplication with DeliteInteractive {
-  def staticArrayBuffer[A:Manifest](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]] = staticData(x)
+  def staticArrayBuffer[A:Typ](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]] = staticData(x)
+  implicit def typArrayBuffer[A:Typ] : Typ[ArrayBuffer[A]] = {
+    implicit val ManifestTyp(m) = typ[A]
+    manifestTyp
+  }
   
   def apply: R
   def result: R = _mainResult.asInstanceOf[R]
@@ -52,11 +57,11 @@ import scala.lms.common.SynchronizedArrayBufferOps
 import scala.collection.mutable.ArrayBuffer
 
 trait OptiMLInteractive extends OptiMLApplication with SynchronizedArrayBufferOps {
-  implicit def staticArrayBuffer[A:Manifest](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]]
+  implicit def staticArrayBuffer[A:Typ](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]]
 }
 
 trait OptiMLInteractiveRunner extends OptiMLApplicationRunner with DeliteInteractiveRunner { 
-  def staticArrayBuffer[A:Manifest](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]] = staticData(x)
+  def staticArrayBuffer[A:Typ](x: ArrayBuffer[A]): Rep[ArrayBuffer[A]] = staticData(x)
 }
 
 def OptiML[R](b: => R) = new Scope[OptiMLInteractive, OptiMLInteractiveRunner, R](b)

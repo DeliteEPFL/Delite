@@ -17,7 +17,7 @@ trait ForwardPassTransformer extends WorklistTransformer /*with BaseDeliteOpsTra
   
   override def isDone = if (runs > 0) true else false
   
-  override def runOnce[A:Manifest](s: Block[A]): Block[A] = {
+  override def runOnce[A:Typ](s: Block[A]): Block[A] = {
     runs += 1
     super.runOnce(s)
   }  

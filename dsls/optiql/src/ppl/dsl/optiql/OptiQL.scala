@@ -152,7 +152,7 @@ trait OptiQLCodeGenRestage extends OptiQLScalaCodeGenPkg with DeliteCodeGenResta
   import IR._
 
   // we shouldn't need this if we have a proper lowering stage (i.e. transformation)
-  override def remap[A](m: Manifest[A]): String = {    
+  override def remap[A](m: Typ[A]): String = {
     m match {
       case m if m.erasure.getSimpleName == "Date" => "Int"
       case _ => super.remap(m)
@@ -164,7 +164,7 @@ trait OptiQLCodeGenScala extends OptiQLCodeGenBase with OptiQLScalaCodeGenPkg wi
   with ScalaGenDeliteOps with ScalaGenDeliteStruct with ScalaGenDeliteArrayOps with ScalaGenDeliteArrayBufferOps with ScalaGenDeliteMapOps with ScalaGenDeliteFileReaderOps with ScalaGenDSArrayOps with ScalaGenDeliteTest with DeliteScalaGenAllOverrides {
   val IR: DeliteApplication with OptiQLExp
 
-  override def remap[A](m: Manifest[A]): String = m match {
+  override def remap[A](m: Typ[A]): String = m match {
     case m if m.erasure.getSimpleName == "Date" => "Int"
     case _ => dsmap(super.remap(m))
   }
@@ -180,7 +180,7 @@ trait OptiQLCodeGenCuda extends OptiQLCodeGenBase with OptiQLCudaCodeGenPkg
   with CudaGenDeliteOps with CudaGenDeliteStruct with CudaGenDeliteArrayOps with CudaGenDSArrayOps with DeliteCudaGenAllOverrides with DeliteCppHostTransfer with DeliteCudaDeviceTransfer {
   val IR: DeliteApplication with OptiQLExp
 
-  override def remap[A](m: Manifest[A]): String = {
+  override def remap[A](m: Typ[A]): String = {
     m match {
       case m if m.erasure.getSimpleName == "Date" => "int32_t"
       case _ => super.remap(m)
@@ -192,7 +192,7 @@ trait OptiQLCodeGenOpenCL extends OptiQLCodeGenBase with OptiQLOpenCLCodeGenPkg
   with OpenCLGenDeliteOps with OpenCLGenDeliteStruct with OpenCLGenDeliteArrayOps with OpenCLGenDSArrayOps with DeliteOpenCLGenAllOverrides {
   val IR: DeliteApplication with OptiQLExp
 
-  override def remap[A](m: Manifest[A]): String = {
+  override def remap[A](m: Typ[A]): String = {
     m match {
       case m if m.erasure.getSimpleName == "Date" => "int32_t"
       case _ => super.remap(m)
@@ -205,7 +205,7 @@ trait OptiQLCodeGenC extends OptiQLCodeGenBase with OptiQLCCodeGenPkg with CGenD
   with CGenDeliteOps with CGenDeliteArrayOps with CGenDeliteStruct with CGenDeliteMapOps with DeliteCGenAllOverrides with DeliteCppHostTransfer {
   val IR: DeliteApplication with OptiQLExp
 
-  override def remap[A](m: Manifest[A]): String = {
+  override def remap[A](m: Typ[A]): String = {
     m match {
       case m if m.erasure.getSimpleName == "Date" => "int32_t"
       case _ => super.remap(m)

@@ -20,23 +20,23 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  block   the task to execute; must be reified if it contains effectful operations!
    */
 
-  class DeliteOpSingleTask[R:Manifest](block0: => Block[R], requireInputs: Boolean = false) extends DeliteOpAbstractSingleTask[R](block0, requireInputs) {
+  class DeliteOpSingleTask[R:Typ](block0: => Block[R], requireInputs: Boolean = false) extends DeliteOpAbstractSingleTask[R](block0, requireInputs) {
     type OpType <: DeliteOpSingleTask[R]
     val mR = manifest[R]
   }
 
-  class DeliteOpSingleWithManifest[A:Manifest,R:Manifest](block0: => Block[R], requireInputs: Boolean = false) extends DeliteOpSingleTask[R](block0,requireInputs) {
+  class DeliteOpSingleWithManifest[A:Typ,R:Typ](block0: => Block[R], requireInputs: Boolean = false) extends DeliteOpSingleTask[R](block0,requireInputs) {
     val mA = manifest[A]
   }
 
-  class DeliteOpSingleWithManifest2[A:Manifest,B:Manifest,R:Manifest](block0: => Block[R], requireInputs: Boolean = false) extends DeliteOpSingleWithManifest[A,R](block0,requireInputs) {
+  class DeliteOpSingleWithManifest2[A:Typ,B:Typ,R:Typ](block0: => Block[R], requireInputs: Boolean = false) extends DeliteOpSingleWithManifest[A,R](block0,requireInputs) {
     val mB = manifest[B]
   }
 
   /**
    * A method call to an external library.
    */
-  abstract class DeliteOpExternal[A:Manifest] extends DeliteOpAbstractExternal[A] {
+  abstract class DeliteOpExternal[A:Typ] extends DeliteOpAbstractExternal[A] {
     type OpType <: DeliteOpExternal[A]
     def alloc: Exp[A]
     def inputs: List[Exp[Any]] = Nil
@@ -101,7 +101,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     * It now supports allocating a result of type I (which will be modified during construction) and
     * returning a result of type CA by invoking the 'finalizer' method.
     */
-    abstract class DeliteOpMapLike[A:Manifest, I <: DeliteCollection[A]:Manifest, CA <: DeliteCollection[A]:Manifest](implicit ctx: SourceContext) extends DeliteOpLoop[CA] {
+    abstract class DeliteOpMapLike[A:Typ, I <: DeliteCollection[A]:Typ, CA <: DeliteCollection[A]:Typ](implicit ctx: SourceContext) extends DeliteOpLoop[CA] {
       type OpType <: DeliteOpMapLike[A,I,CA]
 
       // ideally we would leave these abstract: how can we specify that at least one of the two should be supplied,
@@ -151,15 +151,15 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  alloc function returning the output collection. if it is the same as the input collection,
    *               the operation is mutable; (=> DeliteCollection[B]).
    */
-  abstract class DeliteOpMap[A:Manifest,
-                             B:Manifest, CB <: DeliteCollection[B]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpMap[A:Typ,
+                             B:Typ, CB <: DeliteCollection[B]:Typ](implicit ctx: SourceContext)
     extends DeliteOpMapI[A,B,CB,CB] {
     type OpType <: DeliteOpMap[A,B,CB]
 
     def finalizer(x: Exp[CB]) = x
   }
 
-  abstract class DeliteOpMapI[A:Manifest,B:Manifest,I <: DeliteCollection[B]:Manifest,CB <: DeliteCollection[B]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpMapI[A:Typ,B:Typ,I <: DeliteCollection[B]:Typ,CB <: DeliteCollection[B]:Typ](implicit ctx: SourceContext)
     extends DeliteOpMapLike[B,I,CB] {
     type OpType <: DeliteOpMapI[A,B,I,CB]
 
@@ -187,14 +187,14 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     val dmCB = manifest[CB]
   }
 
-  abstract class DeliteOpFlatMap[A:Manifest, B:Manifest, CB<:DeliteCollection[B]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpFlatMap[A:Typ, B:Typ, CB<:DeliteCollection[B]:Typ](implicit ctx: SourceContext)
     extends DeliteOpFlatMapI[A,B,CB,CB] {
     type OpType <: DeliteOpFlatMap[A,B,CB]
 
     def finalizer(x: Exp[CB]) = x
   }
 
-  abstract class DeliteOpFlatMapI[A:Manifest, B:Manifest, I<:DeliteCollection[B]:Manifest, CB<:DeliteCollection[B]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpFlatMapI[A:Typ, B:Typ, I<:DeliteCollection[B]:Typ, CB<:DeliteCollection[B]:Typ](implicit ctx: SourceContext)
     extends DeliteOpMapLike[B,I,CB] {
     type OpType <: DeliteOpFlatMapI[A,B,I,CB]
 
@@ -224,12 +224,12 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     val dmCB = manifest[CB]
   }
 
-  abstract class DeliteOpMapIndices[A:Manifest,CA <: DeliteCollection[A]:Manifest](implicit ctx: SourceContext) extends DeliteOpMapIndicesI[A,CA,CA] {
+  abstract class DeliteOpMapIndices[A:Typ,CA <: DeliteCollection[A]:Typ](implicit ctx: SourceContext) extends DeliteOpMapIndicesI[A,CA,CA] {
     type OpType <: DeliteOpMapIndices[A,CA]
     def finalizer(x: Exp[CA]) = x
   }
 
-  abstract class DeliteOpMapIndicesI[A:Manifest,I <: DeliteCollection[A]:Manifest,CA <: DeliteCollection[A]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpMapIndicesI[A:Typ,I <: DeliteCollection[A]:Typ,CA <: DeliteCollection[A]:Typ](implicit ctx: SourceContext)
     extends DeliteOpMapLike[A,I,CA] {
     type OpType <: DeliteOpMapIndicesI[A,I,CA]
 
@@ -251,16 +251,16 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    *  Currently conditionally appends values to buffers, which are concatenated in the combine stage.
    *  Note that it is also implicitly a Map-Filter (it accepts a mapping function). Should this be renamed?
    */
-  abstract class DeliteOpFilter[A:Manifest,
-                                B:Manifest, CB <: DeliteCollection[B]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpFilter[A:Typ,
+                                B:Typ, CB <: DeliteCollection[B]:Typ](implicit ctx: SourceContext)
     extends DeliteOpFilterI[A,B,CB,CB] {
     type OpType <: DeliteOpFilter[A,B,CB]
 
     def finalizer(x: Exp[CB]) = x
   }
 
-  abstract class DeliteOpFilterI[A:Manifest,
-                                B:Manifest, I <: DeliteCollection[B]:Manifest, CB <: DeliteCollection[B]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpFilterI[A:Typ,
+                                B:Typ, I <: DeliteCollection[B]:Typ, CB <: DeliteCollection[B]:Typ](implicit ctx: SourceContext)
     extends DeliteOpMapLike[B,I,CB] {
     type OpType <: DeliteOpFilterI[A,B,I,CB]
 
@@ -297,19 +297,19 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  alloc function returning the output collection. if it is the same as the input collection,
    *               the operation is mutable; (=> DeliteCollection[B]).
    */
-  abstract class DeliteOpZipWith[A:Manifest,
-                                 B:Manifest,
-                                 R:Manifest, CR <: DeliteCollection[R]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpZipWith[A:Typ,
+                                 B:Typ,
+                                 R:Typ, CR <: DeliteCollection[R]:Typ](implicit ctx: SourceContext)
     extends DeliteOpZipWithI[A,B,R,CR,CR] {
     type OpType <: DeliteOpZipWith[A,B,R,CR]
 
     def finalizer(x: Exp[CR]) = x
   }
 
-  abstract class DeliteOpZipWithI[A:Manifest,
-                                 B:Manifest,
-                                 R:Manifest,
-                                 I <: DeliteCollection[R]:Manifest, CR <: DeliteCollection[R]:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpZipWithI[A:Typ,
+                                 B:Typ,
+                                 R:Typ,
+                                 I <: DeliteCollection[R]:Typ, CR <: DeliteCollection[R]:Typ](implicit ctx: SourceContext)
     extends DeliteOpMapLike[R,I,CR] {
     type OpType <: DeliteOpZipWithI[A,B,R,I,CR]
 
@@ -337,7 +337,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
   }
 
 
-  abstract class DeliteOpReduceLike[A:Manifest](implicit ctx: SourceContext) extends DeliteOpLoop[A] {
+  abstract class DeliteOpReduceLike[A:Typ](implicit ctx: SourceContext) extends DeliteOpLoop[A] {
     type OpType <: DeliteOpReduceLike[A]
     final lazy val rV: (Sym[A],Sym[A]) = copyOrElse(_.rV)((if (mutable) reflectMutableSym(fresh[A]) else fresh[A], fresh[A])) // TODO: transform vars??
     val mutable: Boolean = false
@@ -356,7 +356,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  zero  the "empty" value - must have value equality
    * @param  func  the reduction function; ([Exp[A],Exp[A]) => Exp[A]. Must be associative.
    */
-  abstract class DeliteOpReduce[A:Manifest](implicit ctx: SourceContext) extends DeliteOpReduceLike[A] {
+  abstract class DeliteOpReduce[A:Typ](implicit ctx: SourceContext) extends DeliteOpReduceLike[A] {
     type OpType <: DeliteOpReduce[A]
 
     // supplied by subclass
@@ -389,7 +389,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  map     the mapping function; Exp[A] => Exp[R]
    * @param  reduce  the reduction function; ([Exp[R],Exp[R]) => Exp[R]. Must be associative.
    */
-  abstract class DeliteOpMapReduce[A:Manifest,R:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpMapReduce[A:Typ,R:Typ](implicit ctx: SourceContext)
     extends DeliteOpReduceLike[R] {
     type OpType <: DeliteOpMapReduce[A,R]
 
@@ -412,7 +412,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
   }
 
   // should this be folded into DeliteOpMapReduce (or into DeliteOpFilter)?
-  abstract class DeliteOpFilterReduce[A:Manifest,R:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpFilterReduce[A:Typ,R:Typ](implicit ctx: SourceContext)
     extends DeliteOpReduceLike[R] {
     type OpType <: DeliteOpFilterReduce[A,R]
 
@@ -438,7 +438,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
 
 
   // reduce tuple in parallel, return first component
-  abstract class DeliteOpFilterReduceFold[R:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpFilterReduceFold[R:Typ](implicit ctx: SourceContext)
     extends DeliteOpLoop[R] {
     type OpType <: DeliteOpFilterReduceFold[R]
 
@@ -478,7 +478,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  zip     the zipWith function; reified version of (Exp[A],Exp[B]) => Exp[R]
    * @param  reduce  the reduction function; reified version of ([Exp[R],Exp[R]) => Exp[R]. Must be associative.
    */
-  abstract class DeliteOpZipWithReduce[A:Manifest,B:Manifest,R:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpZipWithReduce[A:Typ,B:Typ,R:Typ](implicit ctx: SourceContext)
     extends DeliteOpReduceLike[R] {
     type OpType <: DeliteOpZipWithReduce[A,B,R]
 
@@ -502,7 +502,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
   }
 
   // reduce tuple in parallel, return first component
-  abstract class DeliteOpZipWithReduceTuple[A:Manifest,B:Manifest,R:Manifest,Q:Manifest](implicit ctx: SourceContext)
+  abstract class DeliteOpZipWithReduceTuple[A:Typ,B:Typ,R:Typ,Q:Typ](implicit ctx: SourceContext)
     extends DeliteOpLoop[R] {
     type OpType <: DeliteOpZipWithReduceTuple[A,B,R,Q]
 
@@ -538,7 +538,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  sync   a function from an index to a list of objects that should be locked, in a total ordering,
    *                prior to chunk execution, and unlocked after; (Exp[Int] => Exp[List[Any]])
    */
-  abstract class DeliteOpForeach[A:Manifest](implicit ctx: SourceContext) extends DeliteOpLoop[Unit] { //DeliteOp[Unit] {
+  abstract class DeliteOpForeach[A:Typ](implicit ctx: SourceContext) extends DeliteOpLoop[Unit] { //DeliteOp[Unit] {
     type OpType <: DeliteOpForeach[A]
     val in: Exp[DeliteCollection[A]]
     val size: Exp[Int]
@@ -562,7 +562,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
    * @param  size   the size of the input collection
    * @param  func   the foreach function Exp[A] => Exp[Unit]
    */
-  abstract class DeliteOpForeachReduce[A:Manifest](implicit ctx: SourceContext) extends DeliteOpAbstractForeachReduce[A]  { //DeliteOpLoop[Unit] {
+  abstract class DeliteOpForeachReduce[A:Typ](implicit ctx: SourceContext) extends DeliteOpAbstractForeachReduce[A]  { //DeliteOpLoop[Unit] {
     type OpType <: DeliteOpForeachReduce[A]
     val in: Exp[DeliteCollection[A]]
     val size: Exp[Int]
@@ -599,7 +599,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     ))
   }
 
-  abstract class DeliteOpHashCollectLike[K:Manifest, V:Manifest, I:Manifest, CV:Manifest, CI:Manifest, CCV: Manifest](implicit ctx: SourceContext) extends DeliteOpLoop[CCV] {
+  abstract class DeliteOpHashCollectLike[K:Typ, V:Typ, I:Typ, CV:Typ, CI:Typ, CCV: Typ](implicit ctx: SourceContext) extends DeliteOpLoop[CCV] {
     type OpType <: DeliteOpHashCollectLike[K,V,I,CV,CI,CCV]
     final lazy val allocVal: Sym[CI] = copyTransformedOrElse(_.allocVal)(reflectMutableSym(fresh[CI])).asInstanceOf[Sym[CI]]
     final lazy val aV2: Sym[CI] = copyTransformedOrElse(_.aV2)(fresh[CI]).asInstanceOf[Sym[CI]]
@@ -616,7 +616,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     def finalizerI(x: Exp[I]): Exp[CV]
   }
 
-  abstract class DeliteOpBuildIndex[A:Manifest, K:Manifest, CV:Manifest](implicit ctx: SourceContext) extends DeliteOpLoop[CV] {
+  abstract class DeliteOpBuildIndex[A:Typ, K:Typ, CV:Typ](implicit ctx: SourceContext) extends DeliteOpLoop[CV] {
     type OpType <: DeliteOpBuildIndex[A,K,CV]
 
     val in: Exp[DeliteCollection[A]]
@@ -634,25 +634,25 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     val dmCV = manifest[CV]
   }
 
-  abstract class DeliteOpGroupBy[K:Manifest, V: Manifest, CV<:DeliteCollection[V]:Manifest, CCV<:DeliteCollection[CV]:Manifest](implicit ctx: SourceContext) extends DeliteOpMappedGroupBy[V,K,V,CV,CCV] {
+  abstract class DeliteOpGroupBy[K:Typ, V: Typ, CV<:DeliteCollection[V]:Typ, CCV<:DeliteCollection[CV]:Typ](implicit ctx: SourceContext) extends DeliteOpMappedGroupBy[V,K,V,CV,CCV] {
     type OpType <: DeliteOpGroupBy[K,V,CV,CCV]
     val in: Exp[DeliteCollection[V]]
     def valFunc: Exp[V] => Exp[V] = v => v
   }
 
-  abstract class DeliteOpMappedGroupBy[A:Manifest, K:Manifest, V:Manifest, CV<:DeliteCollection[V]:Manifest, CCV<:DeliteCollection[CV]:Manifest](implicit ctx: SourceContext) extends DeliteOpFilteredGroupBy[A,K,V,CV,CCV] {
+  abstract class DeliteOpMappedGroupBy[A:Typ, K:Typ, V:Typ, CV<:DeliteCollection[V]:Typ, CCV<:DeliteCollection[CV]:Typ](implicit ctx: SourceContext) extends DeliteOpFilteredGroupBy[A,K,V,CV,CCV] {
     type OpType <: DeliteOpMappedGroupBy[A,K,V,CV,CCV]
     val in: Exp[DeliteCollection[A]]
     def cond: Exp[A] => Exp[Boolean] = null
   }
 
-  abstract class DeliteOpFilteredGroupBy[A:Manifest, K:Manifest, V:Manifest, CV<:DeliteCollection[V]:Manifest, CCV<:DeliteCollection[CV]:Manifest](implicit ctx: SourceContext) extends DeliteOpFilteredGroupByI[A,K,V,CV,CV,CCV,CCV] {
+  abstract class DeliteOpFilteredGroupBy[A:Typ, K:Typ, V:Typ, CV<:DeliteCollection[V]:Typ, CCV<:DeliteCollection[CV]:Typ](implicit ctx: SourceContext) extends DeliteOpFilteredGroupByI[A,K,V,CV,CV,CCV,CCV] {
     type OpType <: DeliteOpFilteredGroupBy[A,K,V,CV,CCV]
     def finalizer(x: Exp[CCV]) = x
     def finalizerI(x: Exp[CV]) = x
   }
 
-  abstract class DeliteOpFilteredGroupByI[A:Manifest, K:Manifest, V:Manifest, I<:DeliteCollection[V]:Manifest, CV<:DeliteCollection[V]:Manifest, CI<:DeliteCollection[I]:Manifest, CCV<:DeliteCollection[CV]:Manifest](implicit ctx: SourceContext) extends DeliteOpHashCollectLike[K,V,I,CV,CI,CCV] {
+  abstract class DeliteOpFilteredGroupByI[A:Typ, K:Typ, V:Typ, I<:DeliteCollection[V]:Typ, CV<:DeliteCollection[V]:Typ, CI<:DeliteCollection[I]:Typ, CCV<:DeliteCollection[CV]:Typ](implicit ctx: SourceContext) extends DeliteOpHashCollectLike[K,V,I,CV,CI,CCV] {
     type OpType <: DeliteOpFilteredGroupByI[A,K,V,I,CV,CI,CCV]
     val in: Exp[DeliteCollection[A]]
 
@@ -685,8 +685,8 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
         sV = this.sV,
         iV = this.iiV,
         iV2 = this.iiV2,
-        allocVal = if (Config.soaEnabled) unusedSym else this.ibufVal.asInstanceOf[Sym[I]],
-        aV2 = if (Config.soaEnabled) unusedSym else this.ibufVal2.asInstanceOf[Sym[I]],
+        allocVal = if (Config.soaEnabled) unusedSym[I] else this.ibufVal.asInstanceOf[Sym[I]],
+        aV2 = if (Config.soaEnabled) unusedSym[I] else this.ibufVal2.asInstanceOf[Sym[I]],
         alloc = reifyEffects(this.allocI(sV)),
         apply = unusedBlock,
         update = unusedBlock,
@@ -698,7 +698,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
         finalizer = reifyEffects(this.finalizerI(ibufVal))
       ),
       buf = DeliteBufferElem(
-        eV = unusedSym,
+        eV = unusedSym[I],
         sV = this.sV,
         iV = this.iV,
         iV2 = this.iV2,
@@ -728,7 +728,7 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     val dmCCV = manifest[CCV]
   }
 
-  abstract class DeliteOpHashReduceLike[K:Manifest, V:Manifest, I<:DeliteCollection[V]:Manifest, CV<:DeliteCollection[V]:Manifest](implicit ctx: SourceContext) extends DeliteOpLoop[CV] {
+  abstract class DeliteOpHashReduceLike[K:Typ, V:Typ, I<:DeliteCollection[V]:Typ, CV<:DeliteCollection[V]:Typ](implicit ctx: SourceContext) extends DeliteOpLoop[CV] {
     type OpType <: DeliteOpHashReduceLike[K,V,I,CV]
     final lazy val rV: (Sym[V],Sym[V]) = copyOrElse(_.rV)((fresh[V], fresh[V]))
     final lazy val allocVal: Sym[I] = copyTransformedOrElse(_.allocVal)(reflectMutableSym(fresh[I])).asInstanceOf[Sym[I]]
@@ -739,22 +739,22 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
     def finalizer(x: Exp[I]): Exp[CV]
   }
 
-  abstract class DeliteOpGroupByReduce[K:Manifest, V:Manifest, CV <: DeliteCollection[V]:Manifest](implicit ctx: SourceContext) extends DeliteOpMappedGroupByReduce[V,K,V,CV] {
+  abstract class DeliteOpGroupByReduce[K:Typ, V:Typ, CV <: DeliteCollection[V]:Typ](implicit ctx: SourceContext) extends DeliteOpMappedGroupByReduce[V,K,V,CV] {
     type OpType <: DeliteOpGroupByReduce[K,V,CV]
     def valFunc: Exp[V] => Exp[V] = v => v
   }
 
-  abstract class DeliteOpMappedGroupByReduce[A:Manifest, K:Manifest, V:Manifest, CV <: DeliteCollection[V]:Manifest](implicit ctx: SourceContext) extends DeliteOpFilteredGroupByReduce[A,K,V,CV] {
+  abstract class DeliteOpMappedGroupByReduce[A:Typ, K:Typ, V:Typ, CV <: DeliteCollection[V]:Typ](implicit ctx: SourceContext) extends DeliteOpFilteredGroupByReduce[A,K,V,CV] {
     type OpType <: DeliteOpMappedGroupByReduce[A,K,V,CV]
     def cond: Exp[A] => Exp[Boolean] = null
   }
 
-  abstract class DeliteOpFilteredGroupByReduce[A:Manifest, K:Manifest, V:Manifest, CV<:DeliteCollection[V]:Manifest](implicit ctx: SourceContext) extends DeliteOpFilteredGroupByReduceI[A,K,V,CV,CV] {
+  abstract class DeliteOpFilteredGroupByReduce[A:Typ, K:Typ, V:Typ, CV<:DeliteCollection[V]:Typ](implicit ctx: SourceContext) extends DeliteOpFilteredGroupByReduceI[A,K,V,CV,CV] {
     type OpType <: DeliteOpFilteredGroupByReduce[A,K,V,CV]
     def finalizer(x: Exp[CV]) = x
   }
 
-  abstract class DeliteOpFilteredGroupByReduceI[A:Manifest, K:Manifest, V:Manifest, I<:DeliteCollection[V]:Manifest, CV<:DeliteCollection[V]:Manifest](implicit ctx: SourceContext) extends DeliteOpHashReduceLike[K,V,I,CV] {
+  abstract class DeliteOpFilteredGroupByReduceI[A:Typ, K:Typ, V:Typ, I<:DeliteCollection[V]:Typ, CV<:DeliteCollection[V]:Typ](implicit ctx: SourceContext) extends DeliteOpHashReduceLike[K,V,I,CV] {
     type OpType <: DeliteOpFilteredGroupByReduceI[A,K,V,I,CV]
     val in: Exp[DeliteCollection[A]]
 
@@ -775,9 +775,9 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
         eV = this.eV,
         sV = this.sV,
         iV = this.iV,
-        iV2 = unusedSym,
+        iV2 = unusedSym()(intTyp),
         allocVal = this.allocVal,
-        aV2 = unusedSym,
+        aV2 = unusedSym[I],
         alloc = reifyEffects(this.alloc(sV)),
         apply = reifyEffects(dc_apply(allocVal,iV)),
         update = reifyEffects(dc_update(allocVal,iV,eV)),
@@ -801,8 +801,8 @@ trait DeliteOpsExp extends DeliteOpsExpIR with DeliteInternalOpsExp with DeliteC
   ///////////////////////////
   // helpers
 
-  def unusedBlock() = reifyEffectsHere(fatal(unit("emitted unused block in Multiloop")))
-  def unusedSym() = Sym(-10)
+  def unusedBlock(): Block[Nothing] = reifyEffectsHere(fatal(unit("emitted unused block in Multiloop")))(nothingTyp)
+  def unusedSym[T:Typ](): Sym[T] = Sym[T](-10)
   val encounteredZipWith = new scala.collection.mutable.HashMap[Exp[Any], DeliteOpZipWith[_,_,_,_]]()
 
 }

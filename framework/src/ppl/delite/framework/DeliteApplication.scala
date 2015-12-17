@@ -190,31 +190,31 @@ trait DeliteApplication extends DeliteOpsExp with ScalaCompile with DeliteTransf
    * Used when staging a function (to be called by external code) rather than an entire app
   */
 
-  def registerFunction[A:Manifest,R:Manifest](func: Rep[A] => Rep[R]) = {
+  def registerFunction[A:Typ,R:Typ](func: Rep[A] => Rep[R]) = {
     stagedFunc = func
     arity = 1
     fm = List(manifest[A],manifest[R])
   }
 
-  def registerFunction[A:Manifest,B:Manifest,R:Manifest](func: (Rep[A],Rep[B]) => Rep[R]) = {
+  def registerFunction[A:Typ,B:Typ,R:Typ](func: (Rep[A],Rep[B]) => Rep[R]) = {
     stagedFunc = func
     arity = 2
     fm = List(manifest[A],manifest[B],manifest[R])
   }
 
-  def registerFunction[A:Manifest,B:Manifest,C:Manifest,R:Manifest](func: (Rep[A],Rep[B],Rep[C]) => Rep[R]) = {
+  def registerFunction[A:Typ,B:Typ,C:Typ,R:Typ](func: (Rep[A],Rep[B],Rep[C]) => Rep[R]) = {
     stagedFunc = func
     arity = 3
     fm = List(manifest[A],manifest[B],manifest[C],manifest[R])
   }
 
-  def registerFunction[A:Manifest,B:Manifest,C:Manifest,D:Manifest,R:Manifest](func: (Rep[A],Rep[B],Rep[C],Rep[D]) => Rep[R]) = {
+  def registerFunction[A:Typ,B:Typ,C:Typ,D:Typ,R:Typ](func: (Rep[A],Rep[B],Rep[C],Rep[D]) => Rep[R]) = {
     stagedFunc = func
     arity = 4
     fm = List(manifest[A],manifest[B],manifest[C],manifest[D],manifest[R])
   }
 
-  def registerFunction[A:Manifest,B:Manifest,C:Manifest,D:Manifest,E:Manifest,R:Manifest](func: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E]) => Rep[R]) = {
+  def registerFunction[A:Typ,B:Typ,C:Typ,D:Typ,E:Typ,R:Typ](func: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E]) => Rep[R]) = {
     stagedFunc = func
     arity = 5
     fm = List(manifest[A],manifest[B],manifest[C],manifest[D],manifest[E],manifest[R])
@@ -230,7 +230,7 @@ trait DeliteApplication extends DeliteOpsExp with ScalaCompile with DeliteTransf
   }
 
   private var stagedFunc: Any = (liftedMain _)
-  private var fm: List[Manifest[Any]] = List(manifest[Array[String]],manifest[Unit]).asInstanceOf[List[Manifest[Any]]]
+  private var fm: List[Typ[Any]] = List(manifest[Array[String]],manifest[Unit]).asInstanceOf[List[Typ[Any]]]
   private var arity = 1
 
 }

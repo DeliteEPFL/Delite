@@ -16,13 +16,13 @@ import scala.lms.common._
     
     appendTransformer(myLoweringPhase) // register with Delite
       
-    override def onCreate[A:Manifest](s: Sym[A], d: Def[A]) = (d match {
+    override def onCreate[A:Typ](s: Sym[A], d: Def[A]) = (d match {
       case VectorZeros(n)   => s.atPhase(myLoweringPhase) { vfromarray(array(myLoweringPhase(n)) { i => 0 }) }
       case _ => super.onCreate(s,d)
   }).asInstanceOf[Exp[A]]
    
   example usage (2): use global lowering phase
-    override def onCreate[A:Manifest](s: Sym[A], d: Def[A]) = (d match {
+    override def onCreate[A:Typ](s: Sym[A], d: Def[A]) = (d match {
       case VectorZeros(n)   => s.atPhase(deviceIndependentLowering) { vfromarray(array(deviceIndependentLowering(n)) { i => 0 }) }
       case _ => super.onCreate(s,d)
   }).asInstanceOf[Exp[A]]
@@ -36,7 +36,7 @@ trait LoweringTransform extends BaseFatExp with EffectExp with IfThenElseFatExp 
   
   // ---------- Exp api
   
-  implicit def toAfter[A:Manifest](x: Def[A]) = new { def atPhase(t: LoweringTransformer)(y: => Exp[A]) = transformAtPhase(x)(t)(y) }
+  implicit def toAfter[A:Typ](x: Def[A]) = new { def atPhase(t: LoweringTransformer)(y: => Exp[A]) = transformAtPhase(x)(t)(y) }
   implicit def toAfter[A](x: Exp[A]) = new { def atPhase(t: LoweringTransformer)(y: => Exp[A]) = transformAtPhase(x)(t)(y) }
 
   // transform x to y at the *next* iteration of t. 
@@ -49,7 +49,7 @@ trait LoweringTransform extends BaseFatExp with EffectExp with IfThenElseFatExp 
   }
     
   
-  def onCreate[A:Manifest](s: Sym[A], d: Def[A]): Exp[A] = s
+  def onCreate[A:Typ](s: Sym[A], d: Def[A]): Exp[A] = s
 
   // ----------
   

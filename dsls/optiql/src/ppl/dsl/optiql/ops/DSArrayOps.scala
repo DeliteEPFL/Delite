@@ -87,12 +87,12 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
 
 
   // overrides for optimization
-  override def simpleLoop[A:Manifest](size: Exp[Int], v: Sym[Int], body: Def[A]): Exp[A] = body match {
+  override def simpleLoop[A:Typ](size: Exp[Int], v: Sym[Int], body: Def[A]): Exp[A] = body match {
     case b: DeliteCollectElem[A,DeliteArray[A]] => b.func match { // unchecked!
       // split collect of struct
       case Block(Def(Struct(tag, elems))) => 
         assert(b.alloc == Block(b.aV), "TODO: only works on simple arrays for now")
-        def copyLoop[B:Manifest](func: Block[B]): Exp[DeliteArray[B]] = {
+        def copyLoop[B:Typ](func: Block[B]): Exp[DeliteArray[B]] = {
           val aV = fresh[DeliteArray[B]]
           simpleLoop(size, v, DeliteCollectElem[B,DeliteArray[B]](aV = aV, alloc = reifyEffects(aV), cond = b.cond, func = func))
         }
@@ -173,7 +173,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
       // split hashcollectgit  of struct values
       case Block(Def(Struct(tag, elems))) => 
         //assert(b.alloc == Block(b.aV), "TODO: only works on simple arrays for now")
-        def copyLoop[B:Manifest](valFunc: Block[B]): Exp[DeliteArray[DeliteArray[B]]] = {
+        def copyLoop[B:Typ](valFunc: Block[B]): Exp[DeliteArray[DeliteArray[B]]] = {
           //val aV = fresh[DeliteArray[B]]
           simpleLoop(size, v, DeliteHashCollectElem[k,B,DeliteArray[DeliteArray[B]]](cond = b.cond, keyFunc = b.keyFunc, valFunc = valFunc))
         }
@@ -208,13 +208,13 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
   // write these as: (not so easy, polymorphic function)
   // def array_apply = distributeStruct(a) ( e => array_apply(e,i) ) getOrElse (super.array_apply(a,i))
   /*
-  override def array_apply[A:Manifest](a: Rep[Array[A]], i: Rep[Int])(implicit ctx: SourceContext): Rep[A] = a match {
+  override def array_apply[A:Typ](a: Rep[Array[A]], i: Rep[Int])(implicit ctx: SourceContext): Rep[A] = a match {
     case Def(Struct(pre::tag,elems:Map[String,Exp[Array[A]]])) =>
       assert(pre == "Array")
-      def unwrap[A](e:Exp[Array[A]],m:Manifest[Array[A]]): Manifest[A] = m.typeArguments match {
+      def unwrap[A](e:Exp[Array[A]],m:Typ[Array[A]]): Typ[A] = m.typeArguments match {
         case a::_ => mtype(a)
         case _ => 
-          if (m.erasure.isArray) mtype(Manifest.classType(m.erasure.getComponentType))
+          if (m.erasure.isArray) mtype(Typ.classType(m.erasure.getComponentType))
           else { printerr("warning: array_apply expect type Array[A] but got "+m+" for input " + e.toString + "/" + Def.unapply(e).toString); mtype(manifest[Any]) }
       }
       struct[A](tag, elems.map(p=>(p._1,array_apply(p._2, i)(unwrap(p._2,p._2.tp)))))
@@ -230,7 +230,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
   // 2) An Option[Struct] value, represented as a Struct, is set or empty for all the fields
   // together, not individually. What is the result of .isEmpty on the transformed value?
 
-  override def array_length[A:Manifest](a: Rep[Array[A]])(implicit ctx: SourceContext): Rep[Int] = a match {
+  override def array_length[A:Typ](a: Rep[Array[A]])(implicit ctx: SourceContext): Rep[Int] = a match {
     case Def(SimpleLoop(size,v,body)) => body match {
       case b: DeliteCollectElem[_,_] if b.cond == Nil => size
       case _ => super.array_length(a) // TODO: might want to construct reduce elem with same condition?
@@ -246,7 +246,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
 
   // ******** api *********
 
-  def arraySelect[A:Manifest](size: Exp[Int])(func: Exp[Int]=>Exp[A]): Exp[DeliteArray[A]] = {
+  def arraySelect[A:Typ](size: Exp[Int])(func: Exp[Int]=>Exp[A]): Exp[DeliteArray[A]] = {
     val v = fresh[Int]
     val aV = fresh[DeliteArray[A]]
     simpleLoop(size,v,DeliteCollectElem[A, DeliteArray[A]](
@@ -256,7 +256,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
     ))
   }
   
-  def arrayWhere[A:Manifest](size: Exp[Int])(cond: Exp[Int]=>Exp[Boolean])(func: Exp[Int]=>Exp[A]): Exp[DeliteArray[A]] = {
+  def arrayWhere[A:Typ](size: Exp[Int])(cond: Exp[Int]=>Exp[Boolean])(func: Exp[Int]=>Exp[A]): Exp[DeliteArray[A]] = {
     val v = fresh[Int]
     val aV = fresh[DeliteArray[A]]
     simpleLoop(size,v,DeliteCollectElem[A, DeliteArray[A]](
@@ -268,13 +268,13 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
   }
 
   case class DArrayFlatten[A](data: Exp[DeliteArray[DeliteArray[A]]]) extends Def[DeliteArray[A]]
-  def arrayFlatten[A:Manifest](data: Exp[DeliteArray[DeliteArray[A]]]): Exp[DeliteArray[A]] = data match {
+  def arrayFlatten[A:Typ](data: Exp[DeliteArray[DeliteArray[A]]]): Exp[DeliteArray[A]] = data match {
     case Def(Struct(pre::tag,elems:Map[String,Exp[DeliteArray[DeliteArray[A]]]])) =>
       assert(pre == "Array")
-      def unwrap[A](m:Manifest[DeliteArray[A]]): Manifest[A] = m.typeArguments match {
+      def unwrap[A](m:Typ[DeliteArray[A]]): Typ[A] = m.typeArguments match {
         case a::_ => mtype(a)
         case _ => 
-          if (m.erasure.isArray) mtype(Manifest.classType(m.erasure.getComponentType))
+          if (m.erasure.isArray) mtype(Typ.classType(m.erasure.getComponentType))
           else { printerr("warning: arrayFlatten expect type Array[A] but got "+m+" for input " + data.toString + "/" + elems.toString); mtype(manifest[Any]) }
       }
       struct[DeliteArray[A]](tag, elems.map(p=>(p._1, arrayFlatten(p._2)(unwrap(unwrap(p._2.tp))))))
@@ -283,7 +283,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
     
   // ---- hashing
 
-  def arrayDistinct[A:Manifest](size: Exp[Int])(func: Exp[Int]=>Exp[A], condFunc: List[Exp[Int] => Exp[Boolean]] = Nil): Exp[DeliteArray[A]] = {
+  def arrayDistinct[A:Typ](size: Exp[Int])(func: Exp[Int]=>Exp[A], condFunc: List[Exp[Int] => Exp[Boolean]] = Nil): Exp[DeliteArray[A]] = {
     val v = fresh[Int]
     val rV = (fresh[A], fresh[A])
     simpleLoop(size,v,DeliteHashReduceElem[A,A, DeliteArray[A]](
@@ -298,7 +298,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
     ))
   }
   
-  def arrayGroup[K:Manifest,V:Manifest](size: Exp[Int])(keyFunc: Exp[Int]=>Exp[K])(valFunc: Exp[Int]=>Exp[V], condFunc: List[Exp[Int] => Exp[Boolean]] = Nil): Exp[DeliteArray[DeliteArray[V]]] = {
+  def arrayGroup[K:Typ,V:Typ](size: Exp[Int])(keyFunc: Exp[Int]=>Exp[K])(valFunc: Exp[Int]=>Exp[V], condFunc: List[Exp[Int] => Exp[Boolean]] = Nil): Exp[DeliteArray[DeliteArray[V]]] = {
     val v = fresh[Int]
     //val aV = fresh[DeliteArray[A]]
     simpleLoop(size,v,DeliteHashCollectElem[K,V, DeliteArray[DeliteArray[V]]](
@@ -310,7 +310,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
     ))
   }
 
-  def indexBuild[K:Manifest](size: Exp[Int])(keyFunc: Exp[Int]=>Exp[K]): Exp[Map[K,Int]] = {
+  def indexBuild[K:Typ](size: Exp[Int])(keyFunc: Exp[Int]=>Exp[K]): Exp[Map[K,Int]] = {
     val v = fresh[Int]
     //val aV = fresh[DeliteArray[A]]
     simpleLoop(size,v,DeliteHashIndexElem[K,Map[K,Int]](
@@ -324,7 +324,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
 
   case class IndexLookup[K](map: Exp[Map[K,Int]], key: Exp[K]) extends Def[Int]
   
-  def indexLookup[K:Manifest](map: Exp[Map[K,Int]], key: Exp[K]): Exp[Int] = {
+  def indexLookup[K:Typ](map: Exp[Map[K,Int]], key: Exp[K]): Exp[Int] = {
     IndexLookup(map, key)
   }
 
@@ -332,7 +332,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
 
   // ---- reduce
 
-  def reducePlain[A:Manifest](size: Exp[Int])(func: Exp[Int]=>Exp[A])(zero: =>Exp[A])(red: (Exp[A],Exp[A])=>Exp[A]): Exp[A] = {
+  def reducePlain[A:Typ](size: Exp[Int])(func: Exp[Int]=>Exp[A])(zero: =>Exp[A])(red: (Exp[A],Exp[A])=>Exp[A]): Exp[A] = {
     val v = fresh[Int]
     val rV = (fresh[A], fresh[A])
     simpleLoop(size,v,DeliteReduceElem[A](
@@ -344,7 +344,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
     ))
   }
 
-  def reduceTuple[A:Manifest,B:Manifest](size: Exp[Int])(funcA: Exp[Int]=>Exp[A], funcB: Exp[Int]=>Exp[B])(zeroA: =>Exp[A], zeroB: =>Exp[B])(red: ((Exp[A],Exp[B]),(Exp[A],Exp[B]))=>(Block[A],Block[B])): Exp[A] = {
+  def reduceTuple[A:Typ,B:Typ](size: Exp[Int])(funcA: Exp[Int]=>Exp[A], funcB: Exp[Int]=>Exp[B])(zeroA: =>Exp[A], zeroB: =>Exp[B])(red: ((Exp[A],Exp[B]),(Exp[A],Exp[B]))=>(Block[A],Block[B])): Exp[A] = {
     /*lazy val body: Def[R] = copyBodyOrElse(DeliteReduceTupleElem[R,Q](
       func = /*reifyEffects*/(zip(dc_apply(inA,v), dc_apply(inB,v))), //FIXME: tupled reify
       zero = this.zero,
@@ -385,7 +385,7 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
   }
 
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit ctx: SourceContext): Exp[A] = (e match {
     case DArraySort(len, v, comp) => toAtom(DArraySort(f(len),(f(v._1).asInstanceOf[Sym[Int]],f(v._2).asInstanceOf[Sym[Int]]),f(comp)))
     case IndexLookup(map, key) => toAtom(IndexLookup(f(map),f(key)))
     case DArrayFlatten(data) => toAtom(DArrayFlatten(f(data)))(mtype(manifest[A]),ctx)
@@ -396,12 +396,12 @@ trait DSArrayOpsExp extends BaseFatExp with TupleOpsExp with LoopsFatExp with If
 
 
   // override -- shouldn't belong here
-  //override def struct[T:Manifest](tag: List[String], elems: Map[String, Rep[Any]]): Rep[T] =
+  //override def struct[T:Typ](tag: List[String], elems: Map[String, Rep[Any]]): Rep[T] =
   //  toAtom(GenericStruct[T](tag, elems))(mtype(manifest[Map[String,Any]]))
 
 
   //case class CharTuple(a: Exp[Char], b: Exp[Char]) extends Def[(Char,Char)]
-  /*override def make_tuple2[A:Manifest,B:Manifest](t: (Exp[A],Exp[B])): Exp[(A,B)] = 
+  /*override def make_tuple2[A:Typ,B:Typ](t: (Exp[A],Exp[B])): Exp[(A,B)] =
     if (manifest[A] == manifest[Char] && manifest[B] == manifest[Char])
       toAtom(ETuple2(t._1, t._2))(mtype(manifest[Int]))
     else super.make_tuple2(t)*/

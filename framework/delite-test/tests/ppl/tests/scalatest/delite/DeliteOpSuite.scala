@@ -16,14 +16,14 @@ trait DeliteTestBase extends DeliteTestModule with DeliteTestOps with DeliteTest
 
   def Single(a0: Rep[Int]) = new Record { val a = a0 }
 
-  def collectArray[A:Manifest](arr: Rep[DeliteArray[A]], expectedLength: Rep[Int], expectedValues: Rep[Int] => Rep[A]) {
+  def collectArray[A:Typ](arr: Rep[DeliteArray[A]], expectedLength: Rep[Int], expectedValues: Rep[Int] => Rep[A]) {
     collect(arr.length == expectedLength)
     for (i <- 0 until arr.length) {
       collect(arr(i) == expectedValues(i))
     }
   }
 
-  def collectBuf[A:Manifest](buf: Rep[DeliteArrayBuffer[A]], expectedLength: Rep[Int], expectedValues: Rep[Int] => Rep[A]) {
+  def collectBuf[A:Typ](buf: Rep[DeliteArrayBuffer[A]], expectedLength: Rep[Int], expectedValues: Rep[Int] => Rep[A]) {
     collect(buf.length == expectedLength)
     for (i <- 0 until buf.length) {
       collect(buf(i) == expectedValues(i))
